@@ -43,11 +43,11 @@
   window.addEventListener('resize', onWindowResize);
 
   function onWindowResize () {
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    camera.aspect = screenWidth / screenHeight;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(screenWidth, screenHeight);
+    renderer.setSize(w, h);
   }
 
   function deltaRotationsPerMinute (delta, rotationsPerMinute) {
