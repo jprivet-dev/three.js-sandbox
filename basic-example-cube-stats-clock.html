@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Three.js - Basic example - Cube, Stats & Clock</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        html, body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<script type="module">
+  // @see https://cdnjs.com/libraries/three.js
+  import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.1/three.module.min.js';
+  // @see https://cdnjs.com/libraries/stats.js
+  import Stats from 'https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js';
+
+  // init
+
+  const clock = new THREE.Clock();
+  const stats = new Stats();
+
+  const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
+  camera.position.z = 1;
+
+  const scene = new THREE.Scene();
+
+  const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+  const material = new THREE.MeshNormalMaterial();
+
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setAnimationLoop(animation);
+  document.body.appendChild(renderer.domElement);
+  document.body.appendChild(stats.dom);
+
+  window.addEventListener('resize', onWindowResize);
+
+  function onWindowResize () {
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    camera.aspect = screenWidth / screenHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(screenWidth, screenHeight);
+  }
+
+  function deltaRotationsPerMinute (delta, rotationsPerMinute) {
+    return 2 * Math.PI / 60 * delta * rotationsPerMinute;
+  }
+
+  function animation (time) {
+    const delta = clock.getDelta();
+    mesh.rotation.x += deltaRotationsPerMinute(delta, 4);
+    mesh.rotation.y += deltaRotationsPerMinute(delta, 8);
+
+    renderer.render(scene, camera);
+    stats.update();
+  }
+</script>
+</body>
+</html>
