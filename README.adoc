@@ -32,8 +32,29 @@ toc::[]
 == Presentation
 
 Test area with https://threejs.org/[Three.js].
+See the result on https://www.jprivet.dev/three.js-sandbox/.
 
 {back_to_top}
+
+== Prerequisites
+
+* Be sure to install the latest version of :
+** https://nodejs.org/en/[Node.js].
+** https://www.npmjs.com/package/http-server[http-server] with `$ npm install --global http-server`.
+
+{back_to_top}
+
+== Installation
+
+. `$ git clone {git_clone_ssh}`.
+. `$ cd {git_project}`.
+. `$ http-server . -p 8000`: run files from a local web server
+. Open your browser on http://127.0.0.1:8000.
+
+== Resources
+
+* https://threejs.org/
+* https://threejs.org/docs/#manual/en/introduction/How-to-run-things-locally
 
 == Comments, suggestions?
 
