@@ -33,6 +33,7 @@
   import Stats from 'three/addons/libs/stats.module.js';
 
   import { VRButton } from 'three/addons/webxr/VRButton.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
   import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
   import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
   import { InteractiveGroup } from 'three/addons/interactive/InteractiveGroup.js';
@@ -44,8 +45,9 @@
     depth: 0.2,
   };
 
-  // init
+  // INIT
   const container = document.getElementById('container');
+  const raytracerObjects = [];
   const clock = new THREE.Clock();
   const stats = new Stats();
 
@@ -53,7 +55,7 @@
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf7d9aa);
 
-  //
+  // CUBE
 
   class Cube {
     geometry;
@@ -63,6 +65,7 @@
     constructor (width, height, depth) {
       this.geometry = new THREE.BoxGeometry(width, height, depth);
       this.material = new THREE.MeshNormalMaterial();
+      this.material.transparent = true;
       this.mesh = new THREE.Mesh(this.geometry, this.material);
     }
 
@@ -79,9 +82,11 @@
   );
 
   cube.mesh.position.z = -1;
+  cube.mesh.position.y = 0.2; // TODO: to remove
   scene.add(cube.mesh);
+  raytracerObjects.push(cube.mesh);
 
-  //
+  // RENDERER
 
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -96,11 +101,18 @@
 
   window.addEventListener('resize', onWindowResize);
 
+  // ORBIT CONTROLS
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 0, cube.mesh.position.z);
+  controls.update();
+
   //
 
   const group = new InteractiveGroup(renderer, camera);
   scene.add(group);
 
+  // GUI
   // @see https://lil-gui.georgealways.com/
   let guiPreset;
   const gui = new GUI({ width: 300 });
@@ -116,29 +128,35 @@
   gui.add(guiButtons, 'reset');
   guiPreset = gui.save();
 
-  const statsMesh = new HTMLMesh(stats.dom);
-  statsMesh.position.x = -0.75;
-  statsMesh.position.y = 0.1;
-  statsMesh.position.z = -1;
-  statsMesh.rotation.y = Math.PI / 4;
-  statsMesh.scale.setScalar(3);
-  group.add(statsMesh);
-
   const guiMesh = new HTMLMesh(gui.domElement);
-  guiMesh.position.x = 0.75;
-  guiMesh.position.y = 0.1;
+  guiMesh.position.x = 1;
+  guiMesh.position.y = 0;
   guiMesh.position.z = -1;
   guiMesh.rotation.y = -Math.PI / 4;
   guiMesh.scale.setScalar(3);
   group.add(guiMesh);
+  raytracerObjects.push(guiMesh);
 
-  //
+  // STATS
+
+  const statsMesh = new HTMLMesh(stats.dom);
+  statsMesh.position.x = -0.7;
+  statsMesh.position.y = 0;
+  statsMesh.position.z = -1;
+  statsMesh.rotation.y = Math.PI / 4;
+  statsMesh.scale.setScalar(3);
+  group.add(statsMesh);
+  raytracerObjects.push(statsMesh);
+
+  // CONTROLLERS
 
   const controller1 = renderer.xr.getController(0);
   scene.add(controller1);
+  console.log('controller1', controller1);
 
   const controller2 = renderer.xr.getController(1);
   scene.add(controller2);
+  console.log('controller2', controller2);
 
   //
 
@@ -174,11 +192,14 @@
 
   //
 
+  console.log('scene.children', scene.children);
+
   function getIntersections (controller) {
     tempMatrix.identity().extractRotation(controller.matrixWorld);
     raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
     raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-    return raycaster.intersectObjects(group.children, false);
+    // @see https://threejs.org/docs/#api/en/core/Raycaster.intersectObject
+    return raycaster.intersectObjects(raytracerObjects, false);
   }
 
   function intersectObjects (controller) {
@@ -190,15 +211,28 @@
     const line = controller.getObjectByName('line');
     const intersections = getIntersections(controller);
 
-    if (intersections.length > 0) {
-      const intersection = intersections[0];
-      const object = intersection.object;
-      object.material.emissive.r = 1;
-      intersected.push(object);
-      line.scale.z = intersection.distance;
-    }
-    else {
+    if (intersections.length === 0) {
       line.scale.z = 5;
+      return;
+    }
+
+    const intersection = intersections[0];
+    const object = intersection.object;
+
+    if (typeof object.material.opacity === 'undefined') {
+      line.scale.z = 5;
+      return;
+    }
+
+    object.material.opacity = 0.5;
+    intersected.push(object);
+    line.scale.z = intersection.distance;
+  }
+
+  function cleanIntersected () {
+    while (intersected.length) {
+      const object = intersected.pop();
+      object.material.opacity = 1;
     }
   }
 
@@ -225,6 +259,11 @@
 
   function animation () {
     const delta = clock.getDelta();
+
+    cleanIntersected();
+    intersectObjects(controller1);
+    intersectObjects(controller2);
+
     cube.animation(delta);
     renderer.render(scene, camera);
     stats.update();
