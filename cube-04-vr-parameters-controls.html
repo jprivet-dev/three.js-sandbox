@@ -31,15 +31,15 @@
 
 
 
-
-
 </script>
 <script type="module">
   import * as THREE from 'three';
+  import Stats from 'three/addons/libs/stats.module.js';
+
   import { VRButton } from 'three/addons/webxr/VRButton.js';
   import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
   import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
-  import Stats from 'three/addons/libs/stats.module.js';
+  import { InteractiveGroup } from 'three/addons/interactive/InteractiveGroup.js';
 
   let parameters = {
     width: 0.2,
@@ -111,12 +111,24 @@
   gui.add(guiButtons, 'reset');
   guiPreset = gui.save();
 
+  const group = new InteractiveGroup(renderer, camera);
+  scene.add(group);
+
   const statsMesh = new HTMLMesh(stats.dom);
-  statsMesh.position.x = -0.5;
+  statsMesh.position.x = -0.75;
+  statsMesh.position.y = 0.1;
   statsMesh.position.z = -1;
   statsMesh.rotation.y = Math.PI / 4;
   statsMesh.scale.setScalar(3);
-  scene.add(statsMesh);
+  group.add(statsMesh);
+
+  const guiMesh = new HTMLMesh(gui.domElement);
+  guiMesh.position.x = 0.75;
+  guiMesh.position.y = 0.1;
+  guiMesh.position.z = -1;
+  guiMesh.rotation.y = -Math.PI / 4;
+  guiMesh.scale.setScalar(3);
+  group.add(guiMesh);
 
   function onChange () {
     cube.mesh.geometry.dispose();
