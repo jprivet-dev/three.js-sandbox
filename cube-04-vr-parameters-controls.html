@@ -107,10 +107,22 @@
   controls.target.set(0, 0, cube.mesh.position.z);
   controls.update();
 
-  //
+  // STATS & GUI
 
   const group = new InteractiveGroup(renderer, camera);
   scene.add(group);
+
+  // STATS
+
+  const statsMesh = new HTMLMesh(stats.dom);
+  statsMesh.position.x = -0.7;
+  statsMesh.position.y = 0;
+  statsMesh.position.z = -1;
+  // statsMesh.rotation.y = Math.PI / 4;
+  statsMesh.lookAt(camera.position);
+  statsMesh.scale.setScalar(3);
+  group.add(statsMesh);
+  raytracerObjects.push(statsMesh);
 
   // GUI
   // @see https://lil-gui.georgealways.com/
@@ -132,21 +144,11 @@
   guiMesh.position.x = 1;
   guiMesh.position.y = 0;
   guiMesh.position.z = -1;
-  guiMesh.rotation.y = -Math.PI / 4;
+  // guiMesh.rotation.y = -Math.PI / 4;
+  guiMesh.lookAt(camera.position);
   guiMesh.scale.setScalar(3);
   group.add(guiMesh);
   raytracerObjects.push(guiMesh);
-
-  // STATS
-
-  const statsMesh = new HTMLMesh(stats.dom);
-  statsMesh.position.x = -0.7;
-  statsMesh.position.y = 0;
-  statsMesh.position.z = -1;
-  statsMesh.rotation.y = Math.PI / 4;
-  statsMesh.scale.setScalar(3);
-  group.add(statsMesh);
-  raytracerObjects.push(statsMesh);
 
   // CONTROLLERS
 
@@ -265,6 +267,9 @@
     intersectObjects(controller2);
 
     cube.animation(delta);
+    statsMesh.lookAt(camera.position);
+    guiMesh.lookAt(camera.position);
+
     renderer.render(scene, camera);
     stats.update();
 
