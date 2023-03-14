@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Three.js - Cube 02 - Stats & Clock</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        html, body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<script type="module">
+  // @see https://www.jsdelivr.com/package/npm/three
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.min.js';
+  // @see https://www.jsdelivr.com/package/npm/stats.js
+  import Stats from 'https://cdn.jsdelivr.net/npm/stats.js@0.17.0/src/Stats.min.js';
+
+  // init
+
+  const clock = new THREE.Clock();
+  const stats = new Stats();
+
+  const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
+  camera.position.z = 1;
+
+  const scene = new THREE.Scene();
+
+  const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+  const material = new THREE.MeshNormalMaterial();
+
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setAnimationLoop(animation);
+  document.body.appendChild(renderer.domElement);
+  document.body.appendChild(stats.dom);
+
+  window.addEventListener('resize', onWindowResize);
+
+  function onWindowResize () {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }
+
+  function deltaRotationsPerMinute (delta, rotationsPerMinute) {
+    return 2 * Math.PI / 60 * delta * rotationsPerMinute;
+  }
+
+  function animation (time) {
+    const delta = clock.getDelta();
+    mesh.rotation.x += deltaRotationsPerMinute(delta, 4);
+    mesh.rotation.y += deltaRotationsPerMinute(delta, 8);
+
+    renderer.render(scene, camera);
+    stats.update();
+  }
+</script>
+</body>
+</html>
