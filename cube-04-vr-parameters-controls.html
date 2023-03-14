@@ -20,14 +20,12 @@
 </head>
 <body>
 <div id="container"></div>
-<script src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 <script type="importmap">{
     "imports": {
       "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
       "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
     }
 }
-
 
 </script>
 <script type="module">
@@ -38,6 +36,7 @@
   import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
   import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
   import { InteractiveGroup } from 'three/addons/interactive/InteractiveGroup.js';
+  import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
 
   let parameters = {
     width: 0.2,
@@ -51,9 +50,10 @@
   const stats = new Stats();
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
-
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf7d9aa);
+
+  //
 
   class Cube {
     geometry;
@@ -79,8 +79,9 @@
   );
 
   cube.mesh.position.z = -1;
-
   scene.add(cube.mesh);
+
+  //
 
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -94,6 +95,11 @@
   container.appendChild(stats.dom);
 
   window.addEventListener('resize', onWindowResize);
+
+  //
+
+  const group = new InteractiveGroup(renderer, camera);
+  scene.add(group);
 
   // @see https://lil-gui.georgealways.com/
   let guiPreset;
@@ -109,9 +115,6 @@
   gui.add(parameters, 'depth', 0.05, 1.0).onChange(onChange);
   gui.add(guiButtons, 'reset');
   guiPreset = gui.save();
-
-  const group = new InteractiveGroup(renderer, camera);
-  scene.add(group);
 
   const statsMesh = new HTMLMesh(stats.dom);
   statsMesh.position.x = -0.75;
@@ -129,10 +132,84 @@
   guiMesh.scale.setScalar(3);
   group.add(guiMesh);
 
+  //
+
+  const controller1 = renderer.xr.getController(0);
+  scene.add(controller1);
+
+  const controller2 = renderer.xr.getController(1);
+  scene.add(controller2);
+
+  //
+
+  const controllerModelFactory = new XRControllerModelFactory();
+
+  const controllerGrip1 = renderer.xr.getControllerGrip(0);
+  controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
+  scene.add(controllerGrip1);
+
+  const controllerGrip2 = renderer.xr.getControllerGrip(1);
+  controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
+  scene.add(controllerGrip2);
+
+  //
+
+  const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0, 0, -1),
+  ]);
+
+  const line = new THREE.Line(lineGeometry);
+  line.name = 'line';
+  line.scale.z = 5;
+
+  controller1.add(line.clone());
+  controller2.add(line.clone());
+
+  //
+
+  const raycaster = new THREE.Raycaster();
+  const intersected = [];
+  const tempMatrix = new THREE.Matrix4();
+
+  //
+
+  function getIntersections (controller) {
+    tempMatrix.identity().extractRotation(controller.matrixWorld);
+    raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+    return raycaster.intersectObjects(group.children, false);
+  }
+
+  function intersectObjects (controller) {
+    // Do not highlight when already selected
+    if (controller.userData.selected !== undefined) {
+      return;
+    }
+
+    const line = controller.getObjectByName('line');
+    const intersections = getIntersections(controller);
+
+    if (intersections.length > 0) {
+      const intersection = intersections[0];
+      const object = intersection.object;
+      object.material.emissive.r = 1;
+      intersected.push(object);
+      line.scale.z = intersection.distance;
+    }
+    else {
+      line.scale.z = 5;
+    }
+  }
+
+  //
+
   function onChange () {
     cube.mesh.geometry.dispose();
     cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
   }
+
+  //
 
   function onWindowResize () {
     const w = window.innerWidth;
