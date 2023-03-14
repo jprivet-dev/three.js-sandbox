@@ -20,14 +20,31 @@
 </head>
 <body>
 <div id="container"></div>
-<script type="module">
-  // @see https://www.jsdelivr.com/package/npm/three
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.min.js';
-  import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/webxr/VRButton.min.js';
-  import { GUI } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/libs/lil-gui.module.min.js';
+<script src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+<script type="importmap">{
+    "imports": {
+      "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+    }
+}
 
-  // @see https://www.jsdelivr.com/package/npm/stats.js
-  import Stats from 'https://cdn.jsdelivr.net/npm/stats.js@0.17.0/src/Stats.min.js';
+
+
+
+
+
+
+
+
+
+
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
+  import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+  import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
+  import Stats from 'three/addons/libs/stats.module.js';
 
   let parameters = {
     width: 0.2,
@@ -98,6 +115,13 @@
   gui.add(parameters, 'depth', 0.05, 1.0).onChange(onChange);
   gui.add(guiButtons, 'reset');
   guiPreset = gui.save();
+
+  const statsMesh = new HTMLMesh(stats.dom);
+  statsMesh.position.x = -0.4;
+  statsMesh.position.z = -0.6;
+  statsMesh.rotation.y = Math.PI / 4;
+  statsMesh.scale.setScalar(2);
+  scene.add(statsMesh);
 
   function onChange () {
     cube.mesh.geometry.dispose();
