@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Three.js - Cube 04 - VR, Parameters & Controls</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        html, body {
+            margin: 0;
+        }
+
+        #container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(#e4e0ba, #f7d9aa);
+        }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<script src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+<script type="importmap">{
+    "imports": {
+      "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+    }
+}
+
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
+  import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+  import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
+  import Stats from 'three/addons/libs/stats.module.js';
+
+  let parameters = {
+    width: 0.2,
+    height: 0.2,
+    depth: 0.2,
+  };
+
+  // init
+  const container = document.getElementById('container');
+  const clock = new THREE.Clock();
+  const stats = new Stats();
+
+  const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
+
+  const scene = new THREE.Scene();
+
+  class Cube {
+    geometry;
+    material;
+    mesh;
+
+    constructor (width, height, depth) {
+      this.geometry = new THREE.BoxGeometry(width, height, depth);
+      this.material = new THREE.MeshNormalMaterial();
+      this.mesh = new THREE.Mesh(this.geometry, this.material);
+    }
+
+    animation (delta) {
+      this.mesh.rotation.x += deltaRotationsPerMinute(delta, 4);
+      this.mesh.rotation.y += deltaRotationsPerMinute(delta, 8);
+    }
+  }
+
+  const cube = new Cube(
+    parameters.width,
+    parameters.height,
+    parameters.depth,
+  );
+
+  cube.mesh.position.z = -1;
+
+  scene.add(cube.mesh);
+
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.xr.enabled = true;
+  renderer.xr.setReferenceSpaceType('local');
+  renderer.setAnimationLoop(animation);
+
+  container.appendChild(renderer.domElement);
+  container.appendChild(VRButton.createButton(renderer));
+  container.appendChild(stats.dom);
+
+  window.addEventListener('resize', onWindowResize);
+
+  // @see https://lil-gui.georgealways.com/
+  let guiPreset;
+  const gui = new GUI({ width: 300 });
+  const guiButtons = {
+    reset: () => {
+      gui.load(guiPreset);
+    },
+  };
+
+  gui.add(parameters, 'width', 0.05, 1.0).onChange(onChange);
+  gui.add(parameters, 'height', 0.05, 1.0).onChange(onChange);
+  gui.add(parameters, 'depth', 0.05, 1.0).onChange(onChange);
+  gui.add(guiButtons, 'reset');
+  guiPreset = gui.save();
+
+  const statsMesh = new HTMLMesh(stats.dom);
+  statsMesh.position.x = -0.4;
+  statsMesh.position.z = -0.6;
+  statsMesh.rotation.y = Math.PI / 4;
+  statsMesh.scale.setScalar(2);
+  scene.add(statsMesh);
+
+  function onChange () {
+    cube.mesh.geometry.dispose();
+    cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
+  }
+
+  function onWindowResize () {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }
+
+  function deltaRotationsPerMinute (delta, rotationsPerMinute) {
+    return 2 * Math.PI / 60 * delta * rotationsPerMinute;
+  }
+
+  function animation () {
+    const delta = clock.getDelta();
+    cube.animation(delta);
+    renderer.render(scene, camera);
+    stats.update();
+  }
+</script>
+</body>
+</html>
