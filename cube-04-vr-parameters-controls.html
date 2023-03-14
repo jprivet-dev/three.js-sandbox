@@ -28,6 +28,11 @@
     }
 }
 
+
+
+
+
+
 </script>
 <script type="module">
   import * as THREE from 'three';
@@ -107,10 +112,10 @@
   guiPreset = gui.save();
 
   const statsMesh = new HTMLMesh(stats.dom);
-  statsMesh.position.x = -0.4;
-  statsMesh.position.z = -0.6;
+  statsMesh.position.x = -0.5;
+  statsMesh.position.z = -1;
   statsMesh.rotation.y = Math.PI / 4;
-  statsMesh.scale.setScalar(2);
+  statsMesh.scale.setScalar(3);
   scene.add(statsMesh);
 
   function onChange () {
@@ -135,6 +140,9 @@
     cube.animation(delta);
     renderer.render(scene, camera);
     stats.update();
+
+    // Canvas elements doesn't trigger DOM updates, so we have to update the texture
+    statsMesh.material.map.update();
   }
 </script>
 </body>
