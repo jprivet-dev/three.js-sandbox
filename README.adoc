@@ -48,7 +48,7 @@ See the result on https://www.jprivet.dev/three.js-sandbox/.
 
 . `$ git clone {git_clone_ssh}`.
 . `$ cd {git_project}`.
-. `$ http-server . -p 8000`: run files from a local web server
+. `$ http-server . -p 8000`: run files from a local web server.
 . Open your browser on http://127.0.0.1:8000.
 
 == Resources
