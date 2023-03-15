@@ -20,7 +20,8 @@
 </head>
 <body>
 <div id="container"></div>
-<script type="importmap">{
+<script type="importmap">
+{
     "imports": {
       "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
       "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
@@ -50,9 +51,6 @@
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
   let parameters = {
-    width: 0.2,
-    height: 0.2,
-    depth: 0.2,
     backgroundColor: 0xf7d9aa,
   };
 
@@ -140,54 +138,6 @@
 
   container.appendChild(renderer.domElement);
   container.appendChild(VRButton.createButton(renderer));
-
-  // STATS & GUI GROUP
-
-  const group = new InteractiveGroup(renderer, camera);
-  scene.add(group);
-
-  // STATS
-
-  const stats = new Stats();
-  container.appendChild(stats.dom);
-
-  const statsMesh = new HTMLMesh(stats.dom);
-  statsMesh.position.x = -0.25;
-  statsMesh.position.y = -0.167;
-  statsMesh.position.z = -0.5;
-  statsMesh.lookAt(camera.position);
-  statsMesh.scale.setScalar(1);
-  group.add(statsMesh);
-
-  // GUI (https://lil-gui.georgealways.com/)
-
-  let guiPreset;
-  const gui = new GUI({ width: 300 });
-  const guiButtons = {
-    reset: () => {
-      gui.load(guiPreset);
-    },
-  };
-
-  gui.addColor(parameters, 'backgroundColor').onChange(onChange);
-  gui.add(guiButtons, 'reset');
-  guiPreset = gui.save();
-
-  const guiMesh = new HTMLMesh(gui.domElement);
-  guiMesh.position.x = 0;
-  guiMesh.position.y = -0.2;
-  guiMesh.position.z = -0.5;
-  guiMesh.lookAt(camera.position);
-  guiMesh.scale.setScalar(1);
-  group.add(guiMesh);
-
-  function onChange () {
-    // cubesAnimation.forEach(cube => {
-    //   cube.mesh.geometry.dispose();
-    //   cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
-    // });
-    scene.background = new THREE.Color(parameters.backgroundColor);
-  }
 
   // CONTROLLERS
 
@@ -460,6 +410,63 @@
   // @see https://discourse.threejs.org/t/cant-i-use-dragcontrol-and-orbitcontrol-at-the-same-time/4265/3
   dragControls.addEventListener('dragstart', function () { orbitControls.enabled = false; });
   dragControls.addEventListener('dragend', function () { orbitControls.enabled = true; });
+
+  // STATS & GUI GROUP
+
+  const group = new InteractiveGroup(renderer, camera);
+  scene.add(group);
+
+  // STATS
+
+  const stats = new Stats();
+  container.appendChild(stats.dom);
+
+  const statsMesh = new HTMLMesh(stats.dom);
+  statsMesh.position.x = -0.25;
+  statsMesh.position.y = -0.167;
+  statsMesh.position.z = -0.5;
+  statsMesh.lookAt(camera.position);
+  statsMesh.scale.setScalar(1);
+  group.add(statsMesh);
+
+  // GUI (https://lil-gui.georgealways.com/)
+
+  const gui = new GUI({ width: 300 });
+  const guiButtons = {
+    stopAllAnimations: () => {
+      cubesAnimation.forEach(cube => {
+        cube.enableAnimation = false;
+      });
+    },
+    startAllAnimations: () => {
+      cubesAnimation.forEach(cube => {
+        cube.enableAnimation = true;
+      });
+    },
+    reset: () => {
+      gui.reset();
+      cubesAnimation.forEach(cube => {
+        cube.enableAnimation = true;
+      });
+    },
+  };
+
+  gui.add(guiButtons, 'stopAllAnimations').name('Stop all animations');
+  gui.add(guiButtons, 'startAllAnimations').name('Start all animations');
+  gui.addColor(parameters, 'backgroundColor').name('Background color').onChange(onBackgroundColorChange);
+  gui.add(guiButtons, 'reset').name('Reset');
+
+  const guiMesh = new HTMLMesh(gui.domElement);
+  guiMesh.position.x = 0;
+  guiMesh.position.y = -0.2;
+  guiMesh.position.z = -0.5;
+  guiMesh.lookAt(camera.position);
+  guiMesh.scale.setScalar(1);
+  group.add(guiMesh);
+
+  function onBackgroundColorChange () {
+    scene.background = new THREE.Color(parameters.backgroundColor);
+  }
 
   // ON WINDOW RESIZE
 
