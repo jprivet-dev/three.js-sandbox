@@ -27,13 +27,13 @@
     }
 }
 
+
 </script>
 <script type="module">
   import * as THREE from 'three';
   import Stats from 'three/addons/libs/stats.module.js';
 
   import { VRButton } from 'three/addons/webxr/VRButton.js';
-  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
   import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
   import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
   import { InteractiveGroup } from 'three/addons/interactive/InteractiveGroup.js';
@@ -100,12 +100,6 @@
   container.appendChild(stats.dom);
 
   window.addEventListener('resize', onWindowResize);
-
-  // ORBIT CONTROLS
-
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 0, cube.mesh.position.z);
-  controls.update();
 
   // STATS & GUI
 
