@@ -53,6 +53,7 @@
     width: 0.2,
     height: 0.2,
     depth: 0.2,
+    backgroundColor: 0xf7d9aa,
   };
 
   // INIT
@@ -63,7 +64,7 @@
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf7d9aa);
+  scene.background = new THREE.Color(parameters.backgroundColor);
 
   // CUBE
 
@@ -97,7 +98,6 @@
 
   const cubesCount = 1500;
   const cubesAnimation = [];
-  const cubesWidth = 1.8;
   const zoneLength = 10;
   const zoneLimit = 0.3;
 
@@ -169,9 +169,7 @@
     },
   };
 
-  gui.add(parameters, 'width', 0.05, 1.0).onChange(onChange);
-  gui.add(parameters, 'height', 0.05, 1.0).onChange(onChange);
-  gui.add(parameters, 'depth', 0.05, 1.0).onChange(onChange);
+  gui.addColor(parameters, 'backgroundColor').onChange(onChange);
   gui.add(guiButtons, 'reset');
   guiPreset = gui.save();
 
@@ -188,6 +186,7 @@
     //   cube.mesh.geometry.dispose();
     //   cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
     // });
+    scene.background = new THREE.Color(parameters.backgroundColor);
   }
 
   // CONTROLLERS
