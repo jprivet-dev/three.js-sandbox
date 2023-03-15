@@ -217,12 +217,13 @@
   // INTERSECTED OBJECTS MANAGER
 
   class IntersectedObjectsManager {
-    last = null;
+    lastIntersection = null;
 
     update (objects, callback) {
       if (objects.length > 0) {
-        if (this.last !== objects[0].object) {
-          this.change(objects[0].object, callback);
+        const intersection = objects[0];
+        if (!this.lastIntersection || this.lastIntersection.object !== intersection.object) {
+          this.change(intersection, callback);
         }
       }
       else {
@@ -230,32 +231,32 @@
       }
     }
 
-    change (object, callback) {
-      if (this.last) {
-        this.onNotIntersected(this.last, callback);
+    change (intersection, callback) {
+      if (this.lastIntersection) {
+        this.onNotIntersected(this.lastIntersection, callback);
       }
 
-      this.last = object;
-      this.onIntersected(this.last, callback);
-      console.log('Last intersected object', this.last, callback);
+      this.lastIntersection = intersection;
+      this.onIntersected(this.lastIntersection, callback);
+      console.log('Last intersected object', this.lastIntersection.object, callback);
     }
 
     reset (callback) {
-      if (this.last) {
-        this.onNotIntersected(this.last, callback);
+      if (this.lastIntersection) {
+        this.onNotIntersected(this.lastIntersection, callback);
       }
-      this.last = null;
+      this.lastIntersection = null;
     }
 
-    onIntersected (object, callback) {
+    onIntersected (intersection, callback) {
       if (callback && typeof callback.onIntersected === 'function') {
-        callback.onIntersected(object);
+        callback.onIntersected(intersection.object, intersection);
       }
     }
 
-    onNotIntersected (object, callback) {
+    onNotIntersected (intersection, callback) {
       if (callback && typeof callback.onNotIntersected === 'function') {
-        callback.onNotIntersected(object);
+        callback.onNotIntersected(intersection.object, intersection);
       }
     }
   }
@@ -294,13 +295,13 @@
       const intersects = this.intersectObjectsByController(objects, controller);
 
       intersectedObjectsManager.update(intersects, {
-        onIntersected: (object) => {
-          line.scale.z = object.distance;
+        onIntersected: (object, intersection) => {
           object.material.opacity = 0.8;
+          line.scale.z = intersection.distance;
         },
         onNotIntersected: (object) => {
-          line.scale.z = 5;
           object.material.opacity = 1;
+          line.scale.z = 5;
         },
       });
     }
@@ -360,9 +361,11 @@
       this.intersectedObjectsManager.update(intersectedObjects, {
         onIntersected: (object) => {
           object.material.opacity = 0.8;
+          document.body.style.cursor = 'pointer';
         },
         onNotIntersected: (object) => {
           object.material.opacity = 1;
+          document.body.style.cursor = null;
         },
       });
     }
