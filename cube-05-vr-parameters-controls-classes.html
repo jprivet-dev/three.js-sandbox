@@ -27,9 +27,6 @@
     }
 }
 
-
-
-
 </script>
 <script type="module">
   // Sources:
@@ -38,6 +35,8 @@
   // - https://threejs.org/examples/#webgl_animation_skinning_blending
   // - https://threejs.org/examples/#webxr_vr_sandbox
   // - https://threejs.org/examples/#webxr_vr_dragging
+  // - https://threejs.org/examples/#webgl_interactive_cubes
+  // - https://threejs.org/examples/#webgl_interactive_cubes_gpu
 
   import * as THREE from 'three';
   import Stats from 'three/addons/libs/stats.module.js';
@@ -104,8 +103,6 @@
   container.appendChild(renderer.domElement);
   container.appendChild(VRButton.createButton(renderer));
 
-  window.addEventListener('resize', onWindowResize);
-
   // STATS & GUI GROUP
 
   const group = new InteractiveGroup(renderer, camera);
@@ -125,8 +122,8 @@
   group.add(statsMesh);
   objects.push(statsMesh);
 
-  // GUI
-  // @see https://lil-gui.georgealways.com/
+  // GUI (https://lil-gui.georgealways.com/)
+
   let guiPreset;
   const gui = new GUI({ width: 300 });
   const guiButtons = {
@@ -149,6 +146,11 @@
   guiMesh.scale.setScalar(3);
   group.add(guiMesh);
   objects.push(guiMesh);
+
+  function onChange () {
+    cube.mesh.geometry.dispose();
+    cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
+  }
 
   // CONTROLLERS
 
@@ -212,7 +214,7 @@
 
   const xrControllers = new XRControllers(scene, renderer);
 
-  //
+  // INTERSECTIONS
 
   class XRControllersIntersections {
     controller1;
@@ -239,7 +241,7 @@
       this.controller2Intersected = this.intersectObjectsByController(objects, this.controller2);
     }
 
-    // INTERNAL
+    // Internal
 
     intersectObjectsByController (objects, controller) {
       // Do not highlight when already selected
@@ -293,18 +295,9 @@
     xrControllers.controller2,
   );
 
-  //
+  // ON WINDOW RESIZE
 
-  console.log('scene.children', scene.children);
-
-  //
-
-  function onChange () {
-    cube.mesh.geometry.dispose();
-    cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
-  }
-
-  //
+  window.addEventListener('resize', onWindowResize);
 
   function onWindowResize () {
     const w = window.innerWidth;
@@ -313,6 +306,8 @@
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   }
+
+  // UTILS
 
   function deltaRotationsPerMinute (delta, rotationsPerMinute) {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;
