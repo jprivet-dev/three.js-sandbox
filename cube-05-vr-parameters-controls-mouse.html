@@ -47,6 +47,7 @@
   import { InteractiveGroup } from 'three/addons/interactive/InteractiveGroup.js';
   import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
   import { DragControls } from 'three/addons/controls/DragControls.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
   let parameters = {
     width: 0.2,
@@ -57,7 +58,7 @@
   // INIT
 
   const container = document.getElementById('container');
-  const cubes = [];
+  const intersectedCubes = [];
   const clock = new THREE.Clock();
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
@@ -67,26 +68,35 @@
   // CUBE
 
   class Cube {
+    id;
     geometry;
     material;
     mesh;
+    rotationPerMinuteX = 4;
+    rotationPerMinuteY = 8;
+    enableAnimation = true;
 
     constructor (width, height, depth) {
       this.geometry = new THREE.BoxGeometry(width, height, depth);
       this.material = new THREE.MeshNormalMaterial();
       this.material.transparent = true;
       this.mesh = new THREE.Mesh(this.geometry, this.material);
+      this.id = this.mesh.id;
     }
 
     animation (delta) {
-      this.mesh.rotation.x += deltaRotationsPerMinute(delta, 4);
-      this.mesh.rotation.y += deltaRotationsPerMinute(delta, 8);
+      if (this.enableAnimation) {
+        this.mesh.rotation.x += deltaRotationsPerMinute(delta, this.rotationPerMinuteX);
+        this.mesh.rotation.y += deltaRotationsPerMinute(delta, this.rotationPerMinuteY);
+      }
     }
   }
 
-  const cubesCount = 3;
+  const cubesCount = 1500;
   const cubesAnimation = [];
   const cubesWidth = 1.8;
+  const zoneLength = 10;
+  const zoneLimit = 0.3;
 
   for (let i = 0; i < cubesCount; i++) {
     const cube = new Cube(
@@ -95,11 +105,26 @@
       parameters.depth,
     );
 
-    cube.mesh.position.x = cubesWidth / cubesCount * i - cubesWidth / cubesCount;
-    cube.mesh.position.y = 0.2; // TODO: to remove
-    cube.mesh.position.z = -1;
+    cube.mesh.position.x = Math.random() * zoneLength - zoneLength / 2;
+    cube.mesh.position.y = Math.random() * zoneLength - zoneLength / 2;
+    cube.mesh.position.z = Math.random() * zoneLength - zoneLength / 2;
+    cube.mesh.rotation.x = Math.random() * 2 * Math.PI;
+    cube.mesh.rotation.y = Math.random() * 2 * Math.PI;
+    cube.rotationPerMinuteX = Math.random() * 8 - 4;
+    cube.rotationPerMinuteY = Math.random() * 60 - 30;
+
+    if (cube.mesh.position.x >= -zoneLimit && cube.mesh.position.x <= zoneLimit) {
+      cube.mesh.position.x += cube.mesh.position.x < 0 ? -zoneLimit : zoneLimit;
+    }
+    if (cube.mesh.position.y >= -zoneLimit && cube.mesh.position.y <= zoneLimit) {
+      cube.mesh.position.y += cube.mesh.position.y < 0 ? -zoneLimit : zoneLimit;
+    }
+    if (cube.mesh.position.z >= -zoneLimit && cube.mesh.position.z <= zoneLimit) {
+      cube.mesh.position.z += cube.mesh.position.z < 0 ? -zoneLimit : zoneLimit;
+    }
+
     scene.add(cube.mesh);
-    cubes.push(cube.mesh);
+    intersectedCubes.push(cube.mesh);
     cubesAnimation.push(cube);
   }
 
@@ -125,7 +150,7 @@
 
   const statsMesh = new HTMLMesh(stats.dom);
   statsMesh.position.x = -0.25;
-  statsMesh.position.y = -0.17;
+  statsMesh.position.y = -0.167;
   statsMesh.position.z = -0.5;
   statsMesh.lookAt(camera.position);
   statsMesh.scale.setScalar(1);
@@ -156,10 +181,10 @@
   group.add(guiMesh);
 
   function onChange () {
-    cubesAnimation.forEach(cube => {
-      cube.mesh.geometry.dispose();
-      cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
-    });
+    // cubesAnimation.forEach(cube => {
+    //   cube.mesh.geometry.dispose();
+    //   cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
+    // });
   }
 
   // CONTROLLERS
@@ -306,12 +331,16 @@
 
       intersectedObjectsManager.update(intersects, {
         onIntersected: (object, intersection) => {
-          object.material.opacity = 0.8;
           line.scale.z = intersection.distance;
+          object.material.opacity = 0.8;
+          const cubeAnimation = cubesAnimation.find(cube => cube.id === object.id);
+          cubeAnimation.enableAnimation = false;
         },
         onNotIntersected: (object) => {
-          object.material.opacity = 1;
           line.scale.z = 5;
+          object.material.opacity = 1;
+          const cubeAnimation = cubesAnimation.find(cube => cube.id === object.id);
+          cubeAnimation.enableAnimation = true;
         },
       });
     }
@@ -363,12 +392,16 @@
 
       this.intersectedObjectsManager.update(intersectedObjects, {
         onIntersected: (object) => {
-          object.material.opacity = 0.8;
           document.body.style.cursor = 'pointer';
+          object.material.opacity = 0.8;
+          const cubeAnimation = cubesAnimation.find(cube => cube.id === object.id);
+          cubeAnimation.enableAnimation = false;
         },
         onNotIntersected: (object) => {
-          object.material.opacity = 1;
           document.body.style.cursor = null;
+          object.material.opacity = 1;
+          const cubeAnimation = cubesAnimation.find(cube => cube.id === object.id);
+          cubeAnimation.enableAnimation = true;
         },
       });
     }
@@ -388,10 +421,18 @@
     }
   }
 
+  // ORBIT CONTROLS
+
+  const orbitControls = new OrbitControls(camera, renderer.domElement);
+  orbitControls.target.set(0, 0, -1);
+  orbitControls.update();
+
   // DRAG CONTROLS
 
-  const controls = new DragControls([...cubes], camera, renderer.domElement);
-  controls.addEventListener('drag', render);
+  const dragControls = new DragControls([...intersectedCubes], camera, renderer.domElement);
+  dragControls.addEventListener('drag', render);
+  dragControls.addEventListener('dragstart', function () { orbitControls.enabled = false; });
+  dragControls.addEventListener('dragend', function () { orbitControls.enabled = true; });
 
   // ON WINDOW RESIZE
 
@@ -416,8 +457,8 @@
   function animation () {
     const delta = clock.getDelta();
 
-    xrControllerIntersections.intersectedObjects(cubes);
-    mouseIntersections.intersectedObjects(cubes);
+    xrControllerIntersections.intersectedObjects(intersectedCubes);
+    mouseIntersections.intersectedObjects(intersectedCubes);
 
     cubesAnimation.forEach(cube => {
       cube.animation(delta);
