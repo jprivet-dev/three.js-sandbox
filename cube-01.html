@@ -11,11 +11,22 @@
     </style>
 </head>
 <body>
-<script type="module">
-  // @see https://www.jsdelivr.com/package/npm/three
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.min.js';
+<script type="importmap">{
+    "imports": {
+      "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+    }
+}
 
-  // init
+</script>
+<script type="module">
+  // Sources:
+  // - https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
+  // - https://threejs.org/docs/index.html#manual/en/introduction/Installation
+
+  import * as THREE from 'three';
+
+  // INIT
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
   camera.position.z = 1;
@@ -33,7 +44,7 @@
   renderer.setAnimationLoop(animation);
   document.body.appendChild(renderer.domElement);
 
-  // animation
+  // ANIMATION
 
   function animation (time) {
     mesh.rotation.x = time / 2000;
