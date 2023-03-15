@@ -20,15 +20,27 @@
 </head>
 <body>
 <div id="container"></div>
+<script type="importmap">{
+    "imports": {
+      "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+    }
+}
+
+</script>
 <script type="module">
-  // @see https://www.jsdelivr.com/package/npm/three
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.min.js';
-  import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/webxr/VRButton.min.js';
+  // Sources:
+  // - https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
+  // - https://threejs.org/docs/index.html#manual/en/introduction/Installation
+  // - https://threejs.org/examples/#webgl_animation_skinning_blending
+  // - https://threejs.org/examples/#webxr_vr_sandbox
 
-  // @see https://www.jsdelivr.com/package/npm/stats.js
-  import Stats from 'https://cdn.jsdelivr.net/npm/stats.js@0.17.0/src/Stats.min.js';
+  import * as THREE from 'three';
+  import Stats from 'three/addons/libs/stats.module.js';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
 
-  // init
+  // INIT
+
   const container = document.getElementById('container');
   const clock = new THREE.Clock();
   const stats = new Stats();
@@ -69,6 +81,8 @@
   function deltaRotationsPerMinute (delta, rotationsPerMinute) {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;
   }
+
+  // ANIMATION
 
   function animation () {
     const delta = clock.getDelta();
