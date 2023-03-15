@@ -214,7 +214,7 @@
 
   const xrControllers = new XRControllers(scene, renderer);
 
-  // INTERSECTIONS
+  // CONTROLLERS INTERSECTIONS
 
   class XRControllersIntersections {
     controller1;
@@ -232,49 +232,48 @@
     }
 
     cleanIntersected () {
-      this.cleanIntersectedByList(this.controller1Intersected);
-      this.cleanIntersectedByList(this.controller2Intersected);
+      this.cleanIntersectedList(this.controller1Intersected);
+      this.cleanIntersectedList(this.controller2Intersected);
     }
 
-    intersectObjects (objects) {
-      this.controller1Intersected = this.intersectObjectsByController(objects, this.controller1);
-      this.controller2Intersected = this.intersectObjectsByController(objects, this.controller2);
+    intersectedObjects (objects) {
+      this.controller1Intersected = this.intersectedObjectsByController(objects, this.controller1);
+      this.controller2Intersected = this.intersectedObjectsByController(objects, this.controller2);
     }
 
     // Internal
 
-    intersectObjectsByController (objects, controller) {
+    intersectedObjectsByController (objects, controller) {
       // Do not highlight when already selected
       if (controller.userData.selected !== undefined) {
         return;
       }
 
       const line = controller.getObjectByName('line');
-      const intersections = this.getIntersectionsByController(objects, controller);
+      const intersectedObjects = this.intersectObjectsByController(objects, controller);
 
-      if (intersections.length === 0) {
+      if (intersectedObjects.length === 0) {
         line.scale.z = 5;
         return [];
       }
 
-      const intersection = intersections[0];
-      const object = intersection.object;
+      const first = intersectedObjects[0].object;
 
-      if (typeof object.material.opacity === 'undefined') {
+      if (typeof first.material.opacity === 'undefined') {
         line.scale.z = 5;
         return [];
       }
 
       let intersected = [];
 
-      object.material.opacity = 0.8;
-      intersected.push(object);
-      line.scale.z = intersection.distance;
+      first.material.opacity = 0.8;
+      intersected.push(first);
+      line.scale.z = first.distance;
 
       return intersected;
     }
 
-    getIntersectionsByController (objects, controller) {
+    intersectObjectsByController (objects, controller) {
       this.tempMatrix.identity().extractRotation(controller.matrixWorld);
       this.raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
       this.raycaster.ray.direction.set(0, 0, -1).applyMatrix4(this.tempMatrix);
@@ -282,7 +281,7 @@
       return this.raycaster.intersectObjects(objects, false);
     }
 
-    cleanIntersectedByList (intersected) {
+    cleanIntersectedList (intersected) {
       while (intersected.length) {
         const object = intersected.pop();
         object.material.opacity = 1;
@@ -294,6 +293,66 @@
     xrControllers.controller1,
     xrControllers.controller2,
   );
+
+  class IntersectedObjectsManager {
+    last = null;
+
+    update (objects) {
+      if (objects.length > 0) {
+        if (this.last !== objects[0].object) {
+          this.changeLast(objects[0].object);
+        }
+      }
+      else {
+        this.reset();
+      }
+    }
+
+    changeLast (object) {
+      if (this.last) {
+        this.applyNotIntersectedState(this.last);
+      }
+
+      this.last = object;
+      this.applyIntersectedState(this.last);
+      console.log('Last intersected object', this.last);
+    }
+
+    reset () {
+      if (this.last) {
+        this.applyNotIntersectedState(this.last);
+      }
+      this.last = null;
+    }
+
+    applyIntersectedState (object) {
+      object.material.opacity = 0.8;
+    }
+
+    applyNotIntersectedState (object) {
+      object.material.opacity = 1;
+    }
+  }
+
+  const intersectedObjectsManager = new IntersectedObjectsManager();
+
+  // MOUSE INTERSECTIONS
+
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+
+  renderer.domElement.addEventListener('pointermove', onPointerMove);
+
+  function onPointerMove (event) {
+    pointer.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+    pointer.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+  }
+
+  function mouseIntersectObjects (objects) {
+    raycaster.setFromCamera(pointer, camera);
+    const intersectedObjects = raycaster.intersectObjects(objects, false);
+    intersectedObjectsManager.update(intersectedObjects);
+  }
 
   // ON WINDOW RESIZE
 
@@ -319,7 +378,9 @@
     const delta = clock.getDelta();
 
     xrControllerIntersections.cleanIntersected();
-    xrControllerIntersections.intersectObjects(objects);
+    xrControllerIntersections.intersectedObjects(objects);
+
+    mouseIntersectObjects(objects);
 
     cube.animation(delta);
     statsMesh.lookAt(camera.position);
