@@ -11,13 +11,25 @@
     </style>
 </head>
 <body>
-<script type="module">
-  // @see https://www.jsdelivr.com/package/npm/three
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.min.js';
-  // @see https://www.jsdelivr.com/package/npm/stats.js
-  import Stats from 'https://cdn.jsdelivr.net/npm/stats.js@0.17.0/src/Stats.min.js';
+<script type="importmap">{
+    "imports": {
+      "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+    }
+}
 
-  // init
+
+</script>
+<script type="module">
+  // Sources:
+  // - https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
+  // - https://threejs.org/docs/index.html#manual/en/introduction/Installation
+  // - https://threejs.org/examples/#webgl_animation_skinning_blending
+
+  import * as THREE from 'three';
+  import Stats from 'three/addons/libs/stats.module.js';
+
+  // INIT
 
   const clock = new THREE.Clock();
   const stats = new Stats();
@@ -40,6 +52,8 @@
   document.body.appendChild(renderer.domElement);
   document.body.appendChild(stats.dom);
 
+  // ON WINDOW RESIZE
+
   window.addEventListener('resize', onWindowResize);
 
   function onWindowResize () {
@@ -50,9 +64,13 @@
     renderer.setSize(w, h);
   }
 
+  // UTILS
+
   function deltaRotationsPerMinute (delta, rotationsPerMinute) {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;
   }
+
+  // ANIMATION
 
   function animation (time) {
     const delta = clock.getDelta();
