@@ -103,8 +103,6 @@
   container.appendChild(renderer.domElement);
   container.appendChild(VRButton.createButton(renderer));
 
-  window.addEventListener('resize', onWindowResize);
-
   // STATS & GUI GROUP
 
   const group = new InteractiveGroup(renderer, camera);
@@ -124,8 +122,8 @@
   group.add(statsMesh);
   raytracerObjects.push(statsMesh);
 
-  // GUI
-  // @see https://lil-gui.georgealways.com/
+  // GUI (https://lil-gui.georgealways.com/)
+
   let guiPreset;
   const gui = new GUI({ width: 300 });
   const guiButtons = {
@@ -148,6 +146,11 @@
   guiMesh.scale.setScalar(3);
   group.add(guiMesh);
   raytracerObjects.push(guiMesh);
+
+  function onChange () {
+    cube.mesh.geometry.dispose();
+    cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
+  }
 
   // CONTROLLERS
 
@@ -185,15 +188,11 @@
   controller1.add(line.clone());
   controller2.add(line.clone());
 
-  //
+  // INTERSECTIONS
 
   const raycaster = new THREE.Raycaster();
   const intersected = [];
   const tempMatrix = new THREE.Matrix4();
-
-  //
-
-  console.log('scene.children', scene.children);
 
   function getIntersections (controller) {
     tempMatrix.identity().extractRotation(controller.matrixWorld);
@@ -237,14 +236,9 @@
     }
   }
 
-  //
+  // ON WINDOW RESIZE
 
-  function onChange () {
-    cube.mesh.geometry.dispose();
-    cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
-  }
-
-  //
+  window.addEventListener('resize', onWindowResize);
 
   function onWindowResize () {
     const w = window.innerWidth;
@@ -253,6 +247,8 @@
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   }
+
+  // UTILS
 
   function deltaRotationsPerMinute (delta, rotationsPerMinute) {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;

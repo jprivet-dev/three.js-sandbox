@@ -68,6 +68,8 @@
   container.appendChild(VRButton.createButton(renderer));
   container.appendChild(stats.dom);
 
+  // ON WINDOW RESIZE
+
   window.addEventListener('resize', onWindowResize);
 
   function onWindowResize () {
@@ -77,6 +79,8 @@
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   }
+
+  // UTILS
 
   function deltaRotationsPerMinute (delta, rotationsPerMinute) {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;
