@@ -27,7 +27,6 @@
     }
 }
 
-
 </script>
 <script type="module">
   import * as THREE from 'three';
@@ -110,7 +109,6 @@
   statsMesh.position.x = -0.7;
   statsMesh.position.y = 0;
   statsMesh.position.z = -1;
-  // statsMesh.rotation.y = Math.PI / 4;
   statsMesh.lookAt(camera.position);
   statsMesh.scale.setScalar(3);
   group.add(statsMesh);
@@ -136,7 +134,6 @@
   guiMesh.position.x = 1;
   guiMesh.position.y = 0;
   guiMesh.position.z = -1;
-  // guiMesh.rotation.y = -Math.PI / 4;
   guiMesh.lookAt(camera.position);
   guiMesh.scale.setScalar(3);
   group.add(guiMesh);
