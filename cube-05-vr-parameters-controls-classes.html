@@ -27,6 +27,7 @@
     }
 }
 
+
 </script>
 <script type="module">
   import * as THREE from 'three';
@@ -46,7 +47,7 @@
 
   // INIT
   const container = document.getElementById('container');
-  const raytracerObjects = [];
+  const objects = [];
   const clock = new THREE.Clock();
   const stats = new Stats();
 
@@ -83,7 +84,7 @@
   cube.mesh.position.z = -1;
   cube.mesh.position.y = 0.2; // TODO: to remove
   scene.add(cube.mesh);
-  raytracerObjects.push(cube.mesh);
+  objects.push(cube.mesh);
 
   // RENDERER
 
@@ -113,7 +114,7 @@
   statsMesh.lookAt(camera.position);
   statsMesh.scale.setScalar(3);
   group.add(statsMesh);
-  raytracerObjects.push(statsMesh);
+  objects.push(statsMesh);
 
   // GUI
   // @see https://lil-gui.georgealways.com/
@@ -139,7 +140,7 @@
   guiMesh.lookAt(camera.position);
   guiMesh.scale.setScalar(3);
   group.add(guiMesh);
-  raytracerObjects.push(guiMesh);
+  objects.push(guiMesh);
 
   // CONTROLLERS
 
@@ -205,27 +206,41 @@
 
   //
 
-  class XRControllerIntersections {
+  class XRControllersIntersections {
+    controller1;
+    controller2;
+
+    controller1Intersected = [];
+    controller2Intersected = [];
+
     raycaster = new THREE.Raycaster();
-    intersected = [];
     tempMatrix = new THREE.Matrix4();
 
-    getIntersections (objects, controller) {
-      this.tempMatrix.identity().extractRotation(controller.matrixWorld);
-      this.raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-      this.raycaster.ray.direction.set(0, 0, -1).applyMatrix4(this.tempMatrix);
-      // @see https://threejs.org/docs/#api/en/core/Raycaster.intersectObject
-      return this.raycaster.intersectObjects(objects, false);
+    constructor (controller1, controller2) {
+      this.controller1 = controller1;
+      this.controller2 = controller2;
     }
 
-    intersectObjects (objects, controller) {
+    cleanIntersected () {
+      this.cleanIntersectedByList(this.controller1Intersected);
+      this.cleanIntersectedByList(this.controller2Intersected);
+    }
+
+    intersectObjects (objects) {
+      this.controller1Intersected = this.intersectObjectsByController(objects, this.controller1);
+      this.controller2Intersected = this.intersectObjectsByController(objects, this.controller2);
+    }
+
+    // INTERNAL
+
+    intersectObjectsByController (objects, controller) {
       // Do not highlight when already selected
       if (controller.userData.selected !== undefined) {
         return;
       }
 
       const line = controller.getObjectByName('line');
-      const intersections = this.getIntersections(objects, controller);
+      const intersections = this.getIntersectionsByController(objects, controller);
 
       if (intersections.length === 0) {
         line.scale.z = 5;
@@ -249,7 +264,15 @@
       return intersected;
     }
 
-    cleanIntersected (intersected) {
+    getIntersectionsByController (objects, controller) {
+      this.tempMatrix.identity().extractRotation(controller.matrixWorld);
+      this.raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+      this.raycaster.ray.direction.set(0, 0, -1).applyMatrix4(this.tempMatrix);
+      // @see https://threejs.org/docs/#api/en/core/Raycaster.intersectObject
+      return this.raycaster.intersectObjects(objects, false);
+    }
+
+    cleanIntersectedByList (intersected) {
       while (intersected.length) {
         const object = intersected.pop();
         object.material.opacity = 1;
@@ -257,9 +280,10 @@
     }
   }
 
-  let xrController1Intersected = [];
-  let xrController2Intersected = [];
-  const xrControllerIntersections = new XRControllerIntersections();
+  const xrControllerIntersections = new XRControllersIntersections(
+    xrControllers.controller1,
+    xrControllers.controller2,
+  );
 
   //
 
@@ -289,10 +313,8 @@
   function animation () {
     const delta = clock.getDelta();
 
-    xrControllerIntersections.cleanIntersected(xrController1Intersected);
-    xrControllerIntersections.cleanIntersected(xrController2Intersected);
-    xrController1Intersected = xrControllerIntersections.intersectObjects(raytracerObjects, xrControllers.controller1);
-    xrController2Intersected = xrControllerIntersections.intersectObjects(raytracerObjects, xrControllers.controller2);
+    xrControllerIntersections.cleanIntersected();
+    xrControllerIntersections.intersectObjects(objects);
 
     cube.animation(delta);
     statsMesh.lookAt(camera.position);
