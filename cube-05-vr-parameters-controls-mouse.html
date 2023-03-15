@@ -27,6 +27,8 @@
     }
 }
 
+
+
 </script>
 <script type="module">
   // Sources:
@@ -37,6 +39,7 @@
   // - https://threejs.org/examples/#webxr_vr_dragging
   // - https://threejs.org/examples/#webgl_interactive_cubes
   // - https://threejs.org/examples/#webgl_interactive_cubes_gpu
+  // - https://threejs.org/examples/#misc_controls_drag
 
   import * as THREE from 'three';
   import Stats from 'three/addons/libs/stats.module.js';
@@ -45,6 +48,7 @@
   import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
   import { InteractiveGroup } from 'three/addons/interactive/InteractiveGroup.js';
   import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
+  import { DragControls } from 'three/addons/controls/DragControls.js';
 
   let parameters = {
     width: 0.2,
@@ -55,7 +59,7 @@
   // INIT
 
   const container = document.getElementById('container');
-  const objects = [];
+  const cubes = [];
   const clock = new THREE.Clock();
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
@@ -82,16 +86,24 @@
     }
   }
 
-  const cube = new Cube(
-    parameters.width,
-    parameters.height,
-    parameters.depth,
-  );
+  const cubesCount = 3;
+  const cubesAnimation = [];
+  const cubesWidth = 1.8;
 
-  cube.mesh.position.z = -1;
-  cube.mesh.position.y = 0.2; // TODO: to remove
-  scene.add(cube.mesh);
-  objects.push(cube.mesh);
+  for (let i = 0; i < cubesCount; i++) {
+    const cube = new Cube(
+      parameters.width,
+      parameters.height,
+      parameters.depth,
+    );
+
+    cube.mesh.position.x = cubesWidth / cubesCount * i - cubesWidth / cubesCount;
+    cube.mesh.position.y = 0.2; // TODO: to remove
+    cube.mesh.position.z = -1;
+    scene.add(cube.mesh);
+    cubes.push(cube.mesh);
+    cubesAnimation.push(cube);
+  }
 
   // RENDERER
 
@@ -115,12 +127,11 @@
 
   const statsMesh = new HTMLMesh(stats.dom);
   statsMesh.position.x = -0.7;
-  statsMesh.position.y = 0;
+  statsMesh.position.y = -0.4;
   statsMesh.position.z = -1;
   statsMesh.lookAt(camera.position);
   statsMesh.scale.setScalar(3);
   group.add(statsMesh);
-  objects.push(statsMesh);
 
   // GUI (https://lil-gui.georgealways.com/)
 
@@ -140,16 +151,17 @@
 
   const guiMesh = new HTMLMesh(gui.domElement);
   guiMesh.position.x = 1;
-  guiMesh.position.y = 0;
+  guiMesh.position.y = -0.4;
   guiMesh.position.z = -1;
   guiMesh.lookAt(camera.position);
   guiMesh.scale.setScalar(3);
   group.add(guiMesh);
-  objects.push(guiMesh);
 
   function onChange () {
-    cube.mesh.geometry.dispose();
-    cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
+    cubesAnimation.forEach(cube => {
+      cube.mesh.geometry.dispose();
+      cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
+    });
   }
 
   // CONTROLLERS
@@ -366,6 +378,23 @@
 
   const mouseIntersections = new MouseIntersections(camera, renderer);
 
+  // ON CLICK
+
+  renderer.domElement.addEventListener('click', onClick);
+
+  function onClick (event) {
+    event.preventDefault();
+    const intersection = mouseIntersections.intersectedObjectsManager.lastIntersection;
+    if (intersection) {
+      console.log(intersection.object);
+    }
+  }
+
+  // DRAG CONTROLS
+
+  const controls = new DragControls([...cubes], camera, renderer.domElement);
+  controls.addEventListener('drag', render);
+
   // ON WINDOW RESIZE
 
   window.addEventListener('resize', onWindowResize);
@@ -389,18 +418,25 @@
   function animation () {
     const delta = clock.getDelta();
 
-    xrControllerIntersections.intersectedObjects(objects);
-    mouseIntersections.intersectedObjects(objects);
+    xrControllerIntersections.intersectedObjects(cubes);
+    mouseIntersections.intersectedObjects(cubes);
 
-    cube.animation(delta);
+    cubesAnimation.forEach(cube => {
+      cube.animation(delta);
+    });
+
     statsMesh.lookAt(camera.position);
     guiMesh.lookAt(camera.position);
 
-    renderer.render(scene, camera);
+    render();
     stats.update();
 
     // Canvas elements doesn't trigger DOM updates, so we have to update the texture
     statsMesh.material.map.update();
+  }
+
+  function render () {
+    renderer.render(scene, camera);
   }
 </script>
 </body>
