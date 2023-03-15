@@ -219,40 +219,44 @@
   class IntersectedObjectsManager {
     last = null;
 
-    update (objects) {
+    update (objects, callback) {
       if (objects.length > 0) {
         if (this.last !== objects[0].object) {
-          this.change(objects[0].object);
+          this.change(objects[0].object, callback);
         }
       }
       else {
-        this.reset();
+        this.reset(callback);
       }
     }
 
-    change (object) {
+    change (object, callback) {
       if (this.last) {
-        this.applyNotIntersectedState(this.last);
+        this.onNotIntersected(this.last, callback);
       }
 
       this.last = object;
-      this.applyIntersectedState(this.last);
-      console.log('Last intersected object', this.last);
+      this.onIntersected(this.last, callback);
+      console.log('Last intersected object', this.last, callback);
     }
 
-    reset () {
+    reset (callback) {
       if (this.last) {
-        this.applyNotIntersectedState(this.last);
+        this.onNotIntersected(this.last, callback);
       }
       this.last = null;
     }
 
-    applyIntersectedState (object) {
-      object.material.opacity = 0.8;
+    onIntersected (object, callback) {
+      if (callback && typeof callback.onIntersected === 'function') {
+        callback.onIntersected(object);
+      }
     }
 
-    applyNotIntersectedState (object) {
-      object.material.opacity = 1;
+    onNotIntersected (object, callback) {
+      if (callback && typeof callback.onNotIntersected === 'function') {
+        callback.onNotIntersected(object);
+      }
     }
   }
 
@@ -262,8 +266,8 @@
     controller1;
     controller2;
 
-    controller1Intersected = [];
-    controller2Intersected = [];
+    intersectedObjectsManager1 = new IntersectedObjectsManager();
+    intersectedObjectsManager2 = new IntersectedObjectsManager();
 
     raycaster = new THREE.Raycaster();
     tempMatrix = new THREE.Matrix4();
@@ -273,46 +277,32 @@
       this.controller2 = controller2;
     }
 
-    cleanIntersected () {
-      this.cleanIntersectedList(this.controller1Intersected);
-      this.cleanIntersectedList(this.controller2Intersected);
-    }
-
     intersectedObjects (objects) {
-      this.controller1Intersected = this.intersectedObjectsByController(objects, this.controller1);
-      this.controller2Intersected = this.intersectedObjectsByController(objects, this.controller2);
+      this.intersectedObjectsByController(objects, this.controller1, this.intersectedObjectsManager1);
+      this.intersectedObjectsByController(objects, this.controller2, this.intersectedObjectsManager2);
     }
 
     // Internal
 
-    intersectedObjectsByController (objects, controller) {
+    intersectedObjectsByController (objects, controller, intersectedObjectsManager) {
       // Do not highlight when already selected
       if (controller.userData.selected !== undefined) {
         return;
       }
 
       const line = controller.getObjectByName('line');
-      const intersectedObjects = this.intersectObjectsByController(objects, controller);
+      const intersects = this.intersectObjectsByController(objects, controller);
 
-      if (intersectedObjects.length === 0) {
-        line.scale.z = 5;
-        return [];
-      }
-
-      const first = intersectedObjects[0].object;
-
-      if (typeof first.material.opacity === 'undefined') {
-        line.scale.z = 5;
-        return [];
-      }
-
-      let intersected = [];
-
-      first.material.opacity = 0.8;
-      intersected.push(first);
-      line.scale.z = first.distance;
-
-      return intersected;
+      intersectedObjectsManager.update(intersects, {
+        onIntersected: (object) => {
+          line.scale.z = object.distance;
+          object.material.opacity = 0.8;
+        },
+        onNotIntersected: (object) => {
+          line.scale.z = 5;
+          object.material.opacity = 1;
+        },
+      });
     }
 
     intersectObjectsByController (objects, controller) {
@@ -366,7 +356,15 @@
     intersectedObjects (objects) {
       this.raycaster.setFromCamera(this.pointer, this.camera);
       const intersectedObjects = this.raycaster.intersectObjects(objects, false);
-      this.intersectedObjectsManager.update(intersectedObjects);
+
+      this.intersectedObjectsManager.update(intersectedObjects, {
+        onIntersected: (object) => {
+          object.material.opacity = 0.8;
+        },
+        onNotIntersected: (object) => {
+          object.material.opacity = 1;
+        },
+      });
     }
   }
 
@@ -395,7 +393,6 @@
   function animation () {
     const delta = clock.getDelta();
 
-    xrControllerIntersections.cleanIntersected();
     xrControllerIntersections.intersectedObjects(objects);
     mouseIntersections.intersectedObjects(objects);
 
