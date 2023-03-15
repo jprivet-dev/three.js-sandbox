@@ -69,6 +69,9 @@
 
   class Cube {
     id;
+    width = 0.2;
+    height = 0.2;
+    depth = 0.2;
     geometry;
     material;
     mesh;
@@ -76,8 +79,8 @@
     rotationPerMinuteY = 8;
     enableAnimation = true;
 
-    constructor (width, height, depth) {
-      this.geometry = new THREE.BoxGeometry(width, height, depth);
+    constructor () {
+      this.geometry = new THREE.BoxGeometry(this.width, this.height, this.depth);
       this.material = new THREE.MeshNormalMaterial();
       this.material.transparent = true;
       this.mesh = new THREE.Mesh(this.geometry, this.material);
@@ -359,6 +362,30 @@
     xrControllers.controller2,
   );
 
+  xrControllerIntersections.controller1.addEventListener('selectstart', onSelectStart);
+  xrControllerIntersections.controller1.addEventListener('selectend', onSelectEnd);
+
+  function onSelectStart (event) {
+    const controller = event.target;
+    const intersectedObjects = xrControllerIntersections.intersectObjectsByController(intersectedCubes, controller);
+
+    if (intersectedObjects.length > 0) {
+      const intersection = intersectedObjects[0];
+      const object = intersection.object;
+      controller.attach(object);
+      controller.userData.selected = object;
+    }
+  }
+
+  function onSelectEnd (event) {
+    const controller = event.target;
+    if (controller.userData.selected !== undefined) {
+      const object = controller.userData.selected;
+      scene.attach(object);
+      controller.userData.selected = undefined;
+    }
+  }
+
   // MOUSE INTERSECTIONS
 
   class MouseIntersections {
@@ -431,6 +458,7 @@
 
   const dragControls = new DragControls([...intersectedCubes], camera, renderer.domElement);
   dragControls.addEventListener('drag', render);
+  // @see https://discourse.threejs.org/t/cant-i-use-dragcontrol-and-orbitcontrol-at-the-same-time/4265/3
   dragControls.addEventListener('dragstart', function () { orbitControls.enabled = false; });
   dragControls.addEventListener('dragend', function () { orbitControls.enabled = true; });
 
