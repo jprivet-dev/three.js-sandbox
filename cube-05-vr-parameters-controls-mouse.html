@@ -214,6 +214,48 @@
 
   const xrControllers = new XRControllers(scene, renderer);
 
+  // INTERSECTED OBJECTS MANAGER
+
+  class IntersectedObjectsManager {
+    last = null;
+
+    update (objects) {
+      if (objects.length > 0) {
+        if (this.last !== objects[0].object) {
+          this.change(objects[0].object);
+        }
+      }
+      else {
+        this.reset();
+      }
+    }
+
+    change (object) {
+      if (this.last) {
+        this.applyNotIntersectedState(this.last);
+      }
+
+      this.last = object;
+      this.applyIntersectedState(this.last);
+      console.log('Last intersected object', this.last);
+    }
+
+    reset () {
+      if (this.last) {
+        this.applyNotIntersectedState(this.last);
+      }
+      this.last = null;
+    }
+
+    applyIntersectedState (object) {
+      object.material.opacity = 0.8;
+    }
+
+    applyNotIntersectedState (object) {
+      object.material.opacity = 1;
+    }
+  }
+
   // CONTROLLERS INTERSECTIONS
 
   class XRControllersIntersections {
@@ -294,65 +336,41 @@
     xrControllers.controller2,
   );
 
-  class IntersectedObjectsManager {
-    last = null;
-
-    update (objects) {
-      if (objects.length > 0) {
-        if (this.last !== objects[0].object) {
-          this.changeLast(objects[0].object);
-        }
-      }
-      else {
-        this.reset();
-      }
-    }
-
-    changeLast (object) {
-      if (this.last) {
-        this.applyNotIntersectedState(this.last);
-      }
-
-      this.last = object;
-      this.applyIntersectedState(this.last);
-      console.log('Last intersected object', this.last);
-    }
-
-    reset () {
-      if (this.last) {
-        this.applyNotIntersectedState(this.last);
-      }
-      this.last = null;
-    }
-
-    applyIntersectedState (object) {
-      object.material.opacity = 0.8;
-    }
-
-    applyNotIntersectedState (object) {
-      object.material.opacity = 1;
-    }
-  }
-
-  const intersectedObjectsManager = new IntersectedObjectsManager();
-
   // MOUSE INTERSECTIONS
 
-  const raycaster = new THREE.Raycaster();
-  const pointer = new THREE.Vector2();
+  class MouseIntersections {
+    camera;
+    renderer;
+    intersectedObjectsManager = new IntersectedObjectsManager();
 
-  renderer.domElement.addEventListener('pointermove', onPointerMove);
+    raycaster = new THREE.Raycaster();
+    pointer = new THREE.Vector2();
 
-  function onPointerMove (event) {
-    pointer.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-    pointer.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+    constructor (camera, renderer) {
+      this.camera = camera;
+      this.renderer = renderer;
+      this.connect();
+    }
+
+    connect () {
+      this.renderer.domElement.addEventListener('pointermove', (event) => {
+        this.onPointerMove(event);
+      });
+    }
+
+    onPointerMove (event) {
+      this.pointer.x = (event.clientX / this.renderer.domElement.clientWidth) * 2 - 1;
+      this.pointer.y = -(event.clientY / this.renderer.domElement.clientHeight) * 2 + 1;
+    }
+
+    intersectedObjects (objects) {
+      this.raycaster.setFromCamera(this.pointer, this.camera);
+      const intersectedObjects = this.raycaster.intersectObjects(objects, false);
+      this.intersectedObjectsManager.update(intersectedObjects);
+    }
   }
 
-  function mouseIntersectObjects (objects) {
-    raycaster.setFromCamera(pointer, camera);
-    const intersectedObjects = raycaster.intersectObjects(objects, false);
-    intersectedObjectsManager.update(intersectedObjects);
-  }
+  const mouseIntersections = new MouseIntersections(camera, renderer);
 
   // ON WINDOW RESIZE
 
@@ -379,8 +397,7 @@
 
     xrControllerIntersections.cleanIntersected();
     xrControllerIntersections.intersectedObjects(objects);
-
-    mouseIntersectObjects(objects);
+    mouseIntersections.intersectedObjects(objects);
 
     cube.animation(delta);
     statsMesh.lookAt(camera.position);
