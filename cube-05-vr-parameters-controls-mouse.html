@@ -313,13 +313,6 @@
       // @see https://threejs.org/docs/#api/en/core/Raycaster.intersectObject
       return this.raycaster.intersectObjects(objects, false);
     }
-
-    cleanIntersectedList (intersected) {
-      while (intersected.length) {
-        const object = intersected.pop();
-        object.material.opacity = 1;
-      }
-    }
   }
 
   const xrControllerIntersections = new XRControllersIntersections(
