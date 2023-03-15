@@ -30,13 +30,17 @@
 
 
 
-
-
 </script>
 <script type="module">
+  // Sources:
+  // - https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
+  // - https://threejs.org/docs/index.html#manual/en/introduction/Installation
+  // - https://threejs.org/examples/#webgl_animation_skinning_blending
+  // - https://threejs.org/examples/#webxr_vr_sandbox
+  // - https://threejs.org/examples/#webxr_vr_dragging
+
   import * as THREE from 'three';
   import Stats from 'three/addons/libs/stats.module.js';
-
   import { VRButton } from 'three/addons/webxr/VRButton.js';
   import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
   import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
@@ -50,10 +54,10 @@
   };
 
   // INIT
+
   const container = document.getElementById('container');
   const objects = [];
   const clock = new THREE.Clock();
-  const stats = new Stats();
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
   const scene = new THREE.Scene();
@@ -99,16 +103,18 @@
 
   container.appendChild(renderer.domElement);
   container.appendChild(VRButton.createButton(renderer));
-  container.appendChild(stats.dom);
 
   window.addEventListener('resize', onWindowResize);
 
-  // STATS & GUI
+  // STATS & GUI GROUP
 
   const group = new InteractiveGroup(renderer, camera);
   scene.add(group);
 
   // STATS
+
+  const stats = new Stats();
+  container.appendChild(stats.dom);
 
   const statsMesh = new HTMLMesh(stats.dom);
   statsMesh.position.x = -0.7;
@@ -311,6 +317,8 @@
   function deltaRotationsPerMinute (delta, rotationsPerMinute) {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;
   }
+
+  // ANIMATION
 
   function animation () {
     const delta = clock.getDelta();
