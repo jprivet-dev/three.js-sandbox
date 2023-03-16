@@ -277,6 +277,12 @@
       this.controller1.addEventListener('selectend', (event) => {
         this.onSelectEndCallback(event);
       });
+      this.controller2.addEventListener('selectstart', (event) => {
+        this.onSelectStartCallback(event);
+      });
+      this.controller2.addEventListener('selectend', (event) => {
+        this.onSelectEndCallback(event);
+      });
     }
 
     onSelectStart (callback) {
@@ -403,18 +409,6 @@
   }
 
   const mouseIntersections = new MouseIntersections(camera, renderer);
-
-  // ON CLICK
-
-  renderer.domElement.addEventListener('click', onClick);
-
-  function onClick (event) {
-    event.preventDefault();
-    const intersection = mouseIntersections.intersectedObjectsManager.lastIntersection;
-    if (intersection) {
-      console.log(intersection.object);
-    }
-  }
 
   // ORBIT CONTROLS
 
