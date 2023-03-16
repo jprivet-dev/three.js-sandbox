@@ -51,6 +51,7 @@
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
   let parameters = {
+    animations: true,
     backgroundColor: 0xf7d9aa,
   };
 
@@ -95,7 +96,7 @@
   }
 
   const cubesCount = 1500;
-  const cubesAnimation = [];
+  const cubesInstances = [];
   const zoneLength = 10;
   const zoneLimit = 0.3;
 
@@ -126,7 +127,7 @@
 
     scene.add(cube.mesh);
     intersectedCubes.push(cube.mesh);
-    cubesAnimation.push(cube);
+    cubesInstances.push(cube);
   }
 
   // RENDERER
@@ -260,9 +261,36 @@
     raycaster = new THREE.Raycaster();
     tempMatrix = new THREE.Matrix4();
 
+    onSelectStartCallback = function () {};
+    onSelectEndCallback = function () {};
+
     constructor (controller1, controller2) {
       this.controller1 = controller1;
       this.controller2 = controller2;
+      this.connect();
+    }
+
+    connect () {
+      this.controller1.addEventListener('selectstart', (event) => {
+        this.onSelectStartCallback(event);
+      });
+      this.controller1.addEventListener('selectend', (event) => {
+        this.onSelectEndCallback(event);
+      });
+      this.controller2.addEventListener('selectstart', (event) => {
+        this.onSelectStartCallback(event);
+      });
+      this.controller2.addEventListener('selectend', (event) => {
+        this.onSelectEndCallback(event);
+      });
+    }
+
+    onSelectStart (callback) {
+      this.onSelectStartCallback = callback;
+    }
+
+    onSelectEnd (callback) {
+      this.onSelectEndCallback = callback;
     }
 
     intersectedObjects (objects) {
@@ -285,14 +313,14 @@
         onIntersected: (object, intersection) => {
           line.scale.z = intersection.distance;
           object.material.opacity = 0.8;
-          const cubeAnimation = cubesAnimation.find(cube => cube.id === object.id);
-          cubeAnimation.enableAnimation = false;
+          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+          cubeInstance.enableAnimation = false;
         },
         onNotIntersected: (object) => {
           line.scale.z = 5;
           object.material.opacity = 1;
-          const cubeAnimation = cubesAnimation.find(cube => cube.id === object.id);
-          cubeAnimation.enableAnimation = true;
+          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+          cubeInstance.enableAnimation = true;
         },
       });
     }
@@ -311,10 +339,7 @@
     xrControllers.controller2,
   );
 
-  xrControllerIntersections.controller1.addEventListener('selectstart', onSelectStart);
-  xrControllerIntersections.controller1.addEventListener('selectend', onSelectEnd);
-
-  function onSelectStart (event) {
+  xrControllerIntersections.onSelectStart((event) => {
     const controller = event.target;
     const intersectedObjects = xrControllerIntersections.intersectObjectsByController(intersectedCubes, controller);
 
@@ -324,16 +349,16 @@
       controller.attach(object);
       controller.userData.selected = object;
     }
-  }
+  });
 
-  function onSelectEnd (event) {
+  xrControllerIntersections.onSelectEnd((event) => {
     const controller = event.target;
     if (controller.userData.selected !== undefined) {
       const object = controller.userData.selected;
       scene.attach(object);
       controller.userData.selected = undefined;
     }
-  }
+  });
 
   // MOUSE INTERSECTIONS
 
@@ -370,32 +395,20 @@
         onIntersected: (object) => {
           document.body.style.cursor = 'pointer';
           object.material.opacity = 0.8;
-          const cubeAnimation = cubesAnimation.find(cube => cube.id === object.id);
-          cubeAnimation.enableAnimation = false;
+          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+          cubeInstance.enableAnimation = false;
         },
         onNotIntersected: (object) => {
           document.body.style.cursor = null;
           object.material.opacity = 1;
-          const cubeAnimation = cubesAnimation.find(cube => cube.id === object.id);
-          cubeAnimation.enableAnimation = true;
+          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+          cubeInstance.enableAnimation = true;
         },
       });
     }
   }
 
   const mouseIntersections = new MouseIntersections(camera, renderer);
-
-  // ON CLICK
-
-  renderer.domElement.addEventListener('click', onClick);
-
-  function onClick (event) {
-    event.preventDefault();
-    const intersection = mouseIntersections.intersectedObjectsManager.lastIntersection;
-    if (intersection) {
-      console.log(intersection.object);
-    }
-  }
 
   // ORBIT CONTROLS
 
@@ -433,26 +446,12 @@
 
   const gui = new GUI({ width: 300 });
   const guiButtons = {
-    stopAllAnimations: () => {
-      cubesAnimation.forEach(cube => {
-        cube.enableAnimation = false;
-      });
-    },
-    startAllAnimations: () => {
-      cubesAnimation.forEach(cube => {
-        cube.enableAnimation = true;
-      });
-    },
     reset: () => {
       gui.reset();
-      cubesAnimation.forEach(cube => {
-        cube.enableAnimation = true;
-      });
     },
   };
 
-  gui.add(guiButtons, 'stopAllAnimations').name('Stop all animations');
-  gui.add(guiButtons, 'startAllAnimations').name('Start all animations');
+  gui.add(parameters, 'animations').name('Animations');
   gui.addColor(parameters, 'backgroundColor').name('Background color').onChange(onBackgroundColorChange);
   gui.add(guiButtons, 'reset').name('Reset');
 
@@ -494,9 +493,11 @@
     xrControllerIntersections.intersectedObjects(intersectedCubes);
     mouseIntersections.intersectedObjects(intersectedCubes);
 
-    cubesAnimation.forEach(cube => {
-      cube.animation(delta);
-    });
+    if (parameters.animations) {
+      cubesInstances.forEach(cube => {
+        cube.animation(delta);
+      });
+    }
 
     statsMesh.lookAt(camera.position);
     guiMesh.lookAt(camera.position);
