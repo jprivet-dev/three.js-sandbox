@@ -305,7 +305,20 @@
 
     onSelectEnd (event) {
       if (this.callback && typeof this.callback.onSelectEnd === 'function') {
-        this.callback.onSelectEnd(event);
+        const controller = event.target;
+        const intersectionsManager = this.intersectionsManagerByController(controller);
+
+        if (!intersectionsManager) {
+          return;
+        }
+
+        const intersection = intersectionsManager.lastIntersection;
+
+        if (!intersection) {
+          return;
+        }
+
+        this.callback.onSelectEnd(controller, intersection.object, intersection);
       }
     }
 
@@ -326,7 +339,7 @@
     }
 
     intersectionsByController (objects, controller, intersectionsManager) {
-      // Do not highlight when already selected
+      // Do not action when already selected
       if (controller.userData.selected !== undefined) {
         return;
       }
@@ -367,11 +380,10 @@
         controller.attach(object);
         controller.userData.selected = object;
       },
-      onSelectEnd: (event) => {
-        const controller = event.target;
-        if (controller.userData.selected !== undefined) {
-          const object = controller.userData.selected;
-          scene.attach(object);
+      onSelectEnd: (controller) => {
+        const selected = controller.userData.selected;
+        if (selected !== undefined) {
+          scene.attach(selected);
           controller.userData.selected = undefined;
         }
       },
