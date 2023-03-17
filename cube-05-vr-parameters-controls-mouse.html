@@ -28,6 +28,11 @@
     }
 }
 
+
+
+
+
+
 </script>
 <script type="module">
   // Sources:
@@ -202,9 +207,9 @@
 
   const xrControllers = new XRControllers(scene, renderer);
 
-  // INTERSECTED OBJECTS MANAGER
+  // INTERSECTIONS MANAGER
 
-  class IntersectedObjectsManager {
+  class IntersectionsManager {
     lastIntersection = null;
 
     update (objects, callback) {
@@ -255,8 +260,8 @@
     controller1;
     controller2;
 
-    intersectedObjectsManager1 = new IntersectedObjectsManager();
-    intersectedObjectsManager2 = new IntersectedObjectsManager();
+    intersectionsManager1 = new IntersectionsManager();
+    intersectionsManager2 = new IntersectionsManager();
 
     raycaster = new THREE.Raycaster();
     tempMatrix = new THREE.Matrix4();
@@ -294,22 +299,22 @@
     }
 
     intersectedObjects (objects) {
-      this.intersectedObjectsByController(objects, this.controller1, this.intersectedObjectsManager1);
-      this.intersectedObjectsByController(objects, this.controller2, this.intersectedObjectsManager2);
+      this.intersectionsByController(objects, this.controller1, this.intersectionsManager1);
+      this.intersectionsByController(objects, this.controller2, this.intersectionsManager2);
     }
 
     // Internal
 
-    intersectedObjectsByController (objects, controller, intersectedObjectsManager) {
+    intersectionsByController (objects, controller, intersectionsManager) {
       // Do not highlight when already selected
       if (controller.userData.selected !== undefined) {
         return;
       }
 
       const line = controller.getObjectByName('line');
-      const intersects = this.intersectObjectsByController(objects, controller);
+      const intersections = this.intersectObjectsByController(objects, controller);
 
-      intersectedObjectsManager.update(intersects, {
+      intersectionsManager.update(intersections, {
         onIntersected: (object, intersection) => {
           line.scale.z = intersection.distance;
           object.material.opacity = 0.8;
@@ -365,7 +370,7 @@
   class MouseIntersections {
     camera;
     renderer;
-    intersectedObjectsManager = new IntersectedObjectsManager();
+    intersectionsManager = new IntersectionsManager();
 
     raycaster = new THREE.Raycaster();
     pointer = new THREE.Vector2();
@@ -389,9 +394,9 @@
 
     intersectedObjects (objects) {
       this.raycaster.setFromCamera(this.pointer, this.camera);
-      const intersectedObjects = this.raycaster.intersectObjects(objects, false);
+      const intersections = this.raycaster.intersectObjects(objects, false);
 
-      this.intersectedObjectsManager.update(intersectedObjects, {
+      this.intersectionsManager.update(intersections, {
         onIntersected: (object) => {
           document.body.style.cursor = 'pointer';
           object.material.opacity = 0.8;
