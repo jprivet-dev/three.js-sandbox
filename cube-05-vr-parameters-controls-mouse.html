@@ -205,12 +205,12 @@
   // INTERSECTIONS MANAGER
 
   class IntersectionsManager {
-    lastIntersection = null;
+    last = null;
 
-    update (objects, callback) {
-      if (objects.length > 0) {
-        const intersection = objects[0];
-        if (!this.lastIntersection || this.lastIntersection.object !== intersection.object) {
+    update (intersections, callback) {
+      if (intersections.length > 0) {
+        const intersection = intersections[0];
+        if (!this.last || this.last.object !== intersection.object) {
           this.change(intersection, callback);
         }
       }
@@ -220,20 +220,20 @@
     }
 
     change (intersection, callback) {
-      if (this.lastIntersection) {
-        this.onNotIntersected(this.lastIntersection, callback);
+      if (this.last) {
+        this.onNotIntersected(this.last, callback);
       }
 
-      this.lastIntersection = intersection;
-      this.onIntersected(this.lastIntersection, callback);
-      console.log('Last intersected object', this.lastIntersection.object, callback);
+      this.last = intersection;
+      this.onIntersected(this.last, callback);
+      console.log('Last intersected object', this.last.object, callback);
     }
 
     reset (callback) {
-      if (this.lastIntersection) {
-        this.onNotIntersected(this.lastIntersection, callback);
+      if (this.last) {
+        this.onNotIntersected(this.last, callback);
       }
-      this.lastIntersection = null;
+      this.last = null;
     }
 
     onIntersected (intersection, callback) {
@@ -293,7 +293,7 @@
           return;
         }
 
-        const intersection = intersectionsManager.lastIntersection;
+        const intersection = intersectionsManager.last;
 
         if (!intersection) {
           return;
@@ -312,13 +312,25 @@
           return;
         }
 
-        const intersection = intersectionsManager.lastIntersection;
+        const intersection = intersectionsManager.last;
 
         if (!intersection) {
           return;
         }
 
         this.callback.onSelectEnd(controller, intersection.object, intersection);
+      }
+    }
+
+    onIntersected (controller, object, intersection) {
+      if (this.callback && typeof this.callback.onIntersected === 'function') {
+        this.callback.onIntersected(controller, object, intersection);
+      }
+    }
+
+    onNotIntersected (controller, object) {
+      if (this.callback && typeof this.callback.onIntersected === 'function') {
+        this.callback.onNotIntersected(controller, object);
       }
     }
 
@@ -350,15 +362,11 @@
       intersectionsManager.update(intersections, {
         onIntersected: (object, intersection) => {
           line.scale.z = intersection.distance;
-          object.material.opacity = 0.8;
-          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
-          cubeInstance.enableAnimation = false;
+          this.onIntersected(controller, object, intersection);
         },
         onNotIntersected: (object) => {
           line.scale.z = 5;
-          object.material.opacity = 1;
-          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
-          cubeInstance.enableAnimation = true;
+          this.onNotIntersected(controller, object);
         },
       });
     }
@@ -376,6 +384,16 @@
     xrControllers.controller1,
     xrControllers.controller2,
     {
+      onIntersected: (controller, object) => {
+        object.material.opacity = 0.8;
+        const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+        cubeInstance.enableAnimation = false;
+      },
+      onNotIntersected: (controller, object) => {
+        object.material.opacity = 1;
+        const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+        cubeInstance.enableAnimation = true;
+      },
       onSelectStart: (controller, object) => {
         controller.attach(object);
         controller.userData.selected = object;
