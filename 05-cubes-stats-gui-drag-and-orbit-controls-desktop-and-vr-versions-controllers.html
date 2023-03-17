@@ -1,12 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Three.js - Cube 05 - VR, Parameters, Controls, Mouse</title>
+    <title>
+        Three.js - Sandbox 05 - Cubes, Stats, GUI, Drag & Orbit Controls,
+        in Desktop & VR versions, Controllers
+    </title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
-        html, body {
+        body {
             margin: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+        }
+
+        a {
+            color: #0d6efd;
+            text-decoration: underline;
+        }
+
+        a:focus, a:hover {
+            color: #0a58ca;
         }
 
         #container {
@@ -15,10 +32,19 @@
             height: 100%;
             overflow: hidden;
         }
+
+        #link {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+        }
     </style>
 </head>
 <body>
 <div id="container"></div>
+<div id="link">
+    <a href="./">Homepage</a>
+</div>
 <script type="importmap">
 {
     "imports": {
@@ -26,7 +52,6 @@
       "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
     }
 }
-
 </script>
 <script type="module">
   // Sources:
@@ -62,9 +87,7 @@
   // INIT
   //
 
-  const container = document.getElementById('container');
   const clock = new THREE.Clock();
-
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(parameters.backgroundColor);
@@ -141,6 +164,7 @@
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
 
+  const container = document.getElementById('container');
   container.appendChild(renderer.domElement);
   container.appendChild(VRButton.createButton(renderer));
 

@@ -34,6 +34,8 @@ toc::[]
 Test area with https://threejs.org/[Three.js].
 See the result on https://www.jprivet.dev/three.js-sandbox/.
 
+image::img/readme-presentation.png[]
+
 {back_to_top}
 
 == Prerequisites
