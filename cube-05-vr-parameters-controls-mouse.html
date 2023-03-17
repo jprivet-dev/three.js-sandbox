@@ -58,7 +58,6 @@
   // INIT
 
   const container = document.getElementById('container');
-  const intersectedCubes = [];
   const clock = new THREE.Clock();
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
@@ -96,6 +95,7 @@
   }
 
   const cubesCount = 1500;
+  const intersectCubes = [];
   const cubesInstances = [];
   const zoneLength = 10;
   const zoneLimit = 0.3;
@@ -126,13 +126,13 @@
     }
 
     scene.add(cube.mesh);
-    intersectedCubes.push(cube.mesh);
+    intersectCubes.push(cube.mesh);
     cubesInstances.push(cube);
   }
 
   // RENDERER
 
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setAnimationLoop(animation);
@@ -154,8 +154,8 @@
 
       this.initRendererXRConfig();
       this.initControllers();
-      this.initControllersLines();
-      this.initControllersGrips();
+      this.initLines();
+      this.initGrips();
     }
 
     initRendererXRConfig () {
@@ -173,7 +173,7 @@
       console.log('controller2', this.controller2);
     }
 
-    initControllersLines () {
+    initLines () {
       const lineGeometry = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0, 0, 0),
         new THREE.Vector3(0, 0, -1),
@@ -187,16 +187,16 @@
       this.controller2.add(line.clone());
     }
 
-    initControllersGrips () {
+    initGrips () {
       const controllerModelFactory = new XRControllerModelFactory();
 
-      const controllerGrip1 = this.renderer.xr.getControllerGrip(0);
-      controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
-      this.scene.add(controllerGrip1);
+      const grip1 = this.renderer.xr.getControllerGrip(0);
+      grip1.add(controllerModelFactory.createControllerModel(grip1));
+      this.scene.add(grip1);
 
-      const controllerGrip2 = this.renderer.xr.getControllerGrip(1);
-      controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
-      this.scene.add(controllerGrip2);
+      const grip2 = this.renderer.xr.getControllerGrip(1);
+      grip2.add(controllerModelFactory.createControllerModel(grip2));
+      this.scene.add(grip2);
     }
   }
 
@@ -341,7 +341,7 @@
 
   xrControllerIntersections.onSelectStart((event) => {
     const controller = event.target;
-    const intersectedObjects = xrControllerIntersections.intersectObjectsByController(intersectedCubes, controller);
+    const intersectedObjects = xrControllerIntersections.intersectObjectsByController(intersectCubes, controller);
 
     if (intersectedObjects.length > 0) {
       const intersection = intersectedObjects[0];
@@ -418,7 +418,7 @@
 
   // DRAG CONTROLS
 
-  const dragControls = new DragControls([...intersectedCubes], camera, renderer.domElement);
+  const dragControls = new DragControls([...intersectCubes], camera, renderer.domElement);
   dragControls.addEventListener('drag', render);
   // @see https://discourse.threejs.org/t/cant-i-use-dragcontrol-and-orbitcontrol-at-the-same-time/4265/3
   dragControls.addEventListener('dragstart', function () { orbitControls.enabled = false; });
@@ -490,8 +490,8 @@
   function animation () {
     const delta = clock.getDelta();
 
-    xrControllerIntersections.intersectedObjects(intersectedCubes);
-    mouseIntersections.intersectedObjects(intersectedCubes);
+    xrControllerIntersections.intersectedObjects(intersectCubes);
+    mouseIntersections.intersectedObjects(intersectCubes);
 
     if (parameters.animations) {
       cubesInstances.forEach(cube => {
