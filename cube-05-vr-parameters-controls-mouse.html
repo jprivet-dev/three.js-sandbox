@@ -140,7 +140,6 @@
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setAnimationLoop(animation);
 
   container.appendChild(renderer.domElement);
   container.appendChild(VRButton.createButton(renderer));
@@ -497,24 +496,6 @@
   );
 
   //
-  // ORBIT CONTROLS
-  //
-
-  const orbitControls = new OrbitControls(camera, renderer.domElement);
-  orbitControls.target.set(0, 0, -1);
-  orbitControls.update();
-
-  //
-  // DRAG CONTROLS
-  //
-
-  const dragControls = new DragControls([...intersectCubes], camera, renderer.domElement);
-  dragControls.addEventListener('drag', render);
-  // @see https://discourse.threejs.org/t/cant-i-use-dragcontrol-and-orbitcontrol-at-the-same-time/4265/3
-  dragControls.addEventListener('dragstart', function () { orbitControls.enabled = false; });
-  dragControls.addEventListener('dragend', function () { orbitControls.enabled = true; });
-
-  //
   // STATS & GUI GROUP
   //
 
@@ -536,6 +517,10 @@
 
   // GUI (@see https://lil-gui.georgealways.com/)
 
+  const onBackgroundColorChange = () => {
+    scene.background = new THREE.Color(parameters.backgroundColor);
+  };
+
   const gui = new GUI({ width: 300 });
   const guiButtons = {
     reset: () => {
@@ -555,37 +540,33 @@
   guiMesh.scale.setScalar(1);
   group.add(guiMesh);
 
-  function onBackgroundColorChange () {
-    scene.background = new THREE.Color(parameters.backgroundColor);
-  }
-
   //
   // ON WINDOW RESIZE
   //
 
-  window.addEventListener('resize', onWindowResize);
-
-  function onWindowResize () {
+  const onWindowResize = () => {
     const w = window.innerWidth;
     const h = window.innerHeight;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
-  }
+  };
+
+  window.addEventListener('resize', onWindowResize);
 
   //
   // UTILS
   //
 
-  function deltaRotationsPerMinute (delta, rotationsPerMinute) {
+  const deltaRotationsPerMinute = (delta, rotationsPerMinute) => {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;
-  }
+  };
 
   //
   // ANIMATION
   //
 
-  function animation () {
+  const animation = () => {
     const delta = clock.getDelta();
 
     xrControllerIntersections.intersectedObjects(intersectCubes);
@@ -605,11 +586,35 @@
 
     // Canvas elements doesn't trigger DOM updates, so we have to update the texture
     statsMesh.material.map.update();
-  }
+  };
 
-  function render () {
+  const render = () => {
     renderer.render(scene, camera);
-  }
+  };
+
+  //
+  // RENDERER BIS
+  //
+
+  renderer.setAnimationLoop(animation);
+
+  //
+  // ORBIT CONTROLS
+  //
+
+  const orbitControls = new OrbitControls(camera, renderer.domElement);
+  orbitControls.target.set(0, 0, -1);
+  orbitControls.update();
+
+  //
+  // DRAG CONTROLS
+  //
+
+  const dragControls = new DragControls([...intersectCubes], camera, renderer.domElement);
+  dragControls.addEventListener('drag', render);
+  // @see https://discourse.threejs.org/t/cant-i-use-dragcontrol-and-orbitcontrol-at-the-same-time/4265/3
+  dragControls.addEventListener('dragstart', () => orbitControls.enabled = false);
+  dragControls.addEventListener('dragend', () => orbitControls.enabled = true);
 </script>
 </body>
 </html>
