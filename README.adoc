@@ -36,7 +36,9 @@ See the result on https://www.jprivet.dev/three.js-sandbox/.
 
 image::img/readme-presentation.png[]
 
-Find some examples directly on https://codepen.io/jprivet_dev[my Codepen]:
+== Codepen
+
+TIP: Find some examples directly on https://codepen.io/jprivet_dev[my Codepen].
 
 |===
 ||
