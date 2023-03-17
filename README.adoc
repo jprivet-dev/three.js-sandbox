@@ -61,6 +61,8 @@ image::img/readme-presentation.png[]
 * Firefox extension: https://addons.mozilla.org/en-US/firefox/addon/webxr-api-emulator/[WebXR API Emulator]
 * Chrome extension: https://chrome.google.com/webstore/detail/webxr-api-emulator/mjddjgeghkdijejnciaefnkjmkafnnje[WebXR API Emulator]
 
+image::img/readme-webxr.png[]
+
 {back_to_top}
 
 == Resources
