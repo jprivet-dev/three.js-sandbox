@@ -14,7 +14,6 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            /*background: linear-gradient(#e4e0ba, #f7d9aa);*/
         }
     </style>
 </head>
@@ -50,12 +49,18 @@
   import { DragControls } from 'three/addons/controls/DragControls.js';
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+  //
+  // PARAMETERS
+  //
+
   let parameters = {
-    animations: true,
+    animation: true,
     backgroundColor: 0xf7d9aa,
   };
 
+  //
   // INIT
+  //
 
   const container = document.getElementById('container');
   const clock = new THREE.Clock();
@@ -64,7 +69,9 @@
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(parameters.backgroundColor);
 
-  // CUBE
+  //
+  // CUBES
+  //
 
   class Cube {
     id;
@@ -101,11 +108,7 @@
   const zoneLimit = 0.3;
 
   for (let i = 0; i < cubesCount; i++) {
-    const cube = new Cube(
-      parameters.width,
-      parameters.height,
-      parameters.depth,
-    );
+    const cube = new Cube();
 
     cube.mesh.position.x = Math.random() * zoneLength - zoneLength / 2;
     cube.mesh.position.y = Math.random() * zoneLength - zoneLength / 2;
@@ -130,7 +133,9 @@
     cubesInstances.push(cube);
   }
 
+  //
   // RENDERER
+  //
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -140,7 +145,9 @@
   container.appendChild(renderer.domElement);
   container.appendChild(VRButton.createButton(renderer));
 
-  // CONTROLLERS
+  //
+  // XR CONTROLLERS
+  //
 
   class XRControllers {
     scene;
@@ -202,7 +209,9 @@
 
   const xrControllers = new XRControllers(scene, renderer);
 
+  //
   // INTERSECTIONS MANAGER
+  //
 
   class IntersectionsManager {
     last = null;
@@ -249,7 +258,9 @@
     }
   }
 
-  // CONTROLLERS INTERSECTIONS
+  //
+  // XR CONTROLLERS INTERSECTIONS
+  //
 
   class XRControllersIntersections {
     controller1;
@@ -408,7 +419,9 @@
     },
   );
 
+  //
   // MOUSE INTERSECTIONS
+  //
 
   class MouseIntersections {
     camera;
@@ -483,13 +496,17 @@
     },
   );
 
+  //
   // ORBIT CONTROLS
+  //
 
   const orbitControls = new OrbitControls(camera, renderer.domElement);
   orbitControls.target.set(0, 0, -1);
   orbitControls.update();
 
+  //
   // DRAG CONTROLS
+  //
 
   const dragControls = new DragControls([...intersectCubes], camera, renderer.domElement);
   dragControls.addEventListener('drag', render);
@@ -497,7 +514,9 @@
   dragControls.addEventListener('dragstart', function () { orbitControls.enabled = false; });
   dragControls.addEventListener('dragend', function () { orbitControls.enabled = true; });
 
+  //
   // STATS & GUI GROUP
+  //
 
   const group = new InteractiveGroup(renderer, camera);
   scene.add(group);
@@ -515,7 +534,7 @@
   statsMesh.scale.setScalar(1);
   group.add(statsMesh);
 
-  // GUI (https://lil-gui.georgealways.com/)
+  // GUI (@see https://lil-gui.georgealways.com/)
 
   const gui = new GUI({ width: 300 });
   const guiButtons = {
@@ -524,7 +543,7 @@
     },
   };
 
-  gui.add(parameters, 'animations').name('Animations');
+  gui.add(parameters, 'animation').name('Animation');
   gui.addColor(parameters, 'backgroundColor').name('Background color').onChange(onBackgroundColorChange);
   gui.add(guiButtons, 'reset').name('Reset');
 
@@ -540,7 +559,9 @@
     scene.background = new THREE.Color(parameters.backgroundColor);
   }
 
+  //
   // ON WINDOW RESIZE
+  //
 
   window.addEventListener('resize', onWindowResize);
 
@@ -552,13 +573,17 @@
     renderer.setSize(w, h);
   }
 
+  //
   // UTILS
+  //
 
   function deltaRotationsPerMinute (delta, rotationsPerMinute) {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;
   }
 
+  //
   // ANIMATION
+  //
 
   function animation () {
     const delta = clock.getDelta();
@@ -566,7 +591,7 @@
     xrControllerIntersections.intersectedObjects(intersectCubes);
     mouseIntersections.intersectedObjects(intersectCubes);
 
-    if (parameters.animations) {
+    if (parameters.animation) {
       cubesInstances.forEach(cube => {
         cube.animation(delta);
       });
