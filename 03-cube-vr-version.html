@@ -1,33 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Three.js - Cube 02 - Stats & Clock</title>
+    <title>Three.js - Sandbox 03 - Cube, VR version</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
-        html, body {
+        body {
             margin: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+        }
+
+        a {
+            color: #0d6efd;
+            text-decoration: underline;
+        }
+
+        a:focus, a:hover {
+            color: #0a58ca;
+        }
+
+        #container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #link {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
         }
     </style>
 </head>
 <body>
+<div id="container"></div>
+<div id="link">
+    <a href="./">Homepage</a>
+</div>
 <script type="importmap">{
     "imports": {
       "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
       "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
     }
 }
-
-
 </script>
 <script type="module">
   // Sources:
   // - https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
   // - https://threejs.org/docs/index.html#manual/en/introduction/Installation
   // - https://threejs.org/examples/#webgl_animation_skinning_blending
+  // - https://threejs.org/examples/#webxr_vr_sandbox
 
   import * as THREE from 'three';
   import Stats from 'three/addons/libs/stats.module.js';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
 
   // INIT
 
@@ -35,22 +66,26 @@
   const stats = new Stats();
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
-  camera.position.z = 1;
-
   const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf7d9aa);
 
   const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
   const material = new THREE.MeshNormalMaterial();
-
   const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.z = -1;
   scene.add(mesh);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.xr.enabled = true;
+  renderer.xr.setReferenceSpaceType('local');
   renderer.setAnimationLoop(animation);
-  document.body.appendChild(renderer.domElement);
-  document.body.appendChild(stats.dom);
+
+  const container = document.getElementById('container');
+  container.appendChild(renderer.domElement);
+  container.appendChild(VRButton.createButton(renderer));
+  container.appendChild(stats.dom);
 
   // ON WINDOW RESIZE
 
@@ -72,7 +107,7 @@
 
   // ANIMATION
 
-  function animation (time) {
+  function animation () {
     const delta = clock.getDelta();
     mesh.rotation.x += deltaRotationsPerMinute(delta, 4);
     mesh.rotation.y += deltaRotationsPerMinute(delta, 8);

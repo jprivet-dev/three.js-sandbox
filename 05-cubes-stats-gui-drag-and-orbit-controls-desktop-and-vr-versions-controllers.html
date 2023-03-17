@@ -1,12 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Three.js - Cube 05 - VR, Parameters, Controls, Mouse</title>
+    <title>
+        Three.js - Sandbox 05 - Cubes, Stats, GUI, Drag & Orbit Controls,
+        in Desktop & VR versions, Controllers
+    </title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
-        html, body {
+        body {
             margin: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+        }
+
+        a {
+            color: #0d6efd;
+            text-decoration: underline;
+        }
+
+        a:focus, a:hover {
+            color: #0a58ca;
         }
 
         #container {
@@ -14,12 +31,20 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            /*background: linear-gradient(#e4e0ba, #f7d9aa);*/
+        }
+
+        #link {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
         }
     </style>
 </head>
 <body>
 <div id="container"></div>
+<div id="link">
+    <a href="./">Homepage</a>
+</div>
 <script type="importmap">
 {
     "imports": {
@@ -27,7 +52,6 @@
       "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
     }
 }
-
 </script>
 <script type="module">
   // Sources:
@@ -50,22 +74,27 @@
   import { DragControls } from 'three/addons/controls/DragControls.js';
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+  //
+  // PARAMETERS
+  //
+
   let parameters = {
-    animations: true,
+    animation: true,
     backgroundColor: 0xf7d9aa,
   };
 
+  //
   // INIT
+  //
 
-  const container = document.getElementById('container');
-  const intersectedCubes = [];
   const clock = new THREE.Clock();
-
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(parameters.backgroundColor);
 
-  // CUBE
+  //
+  // CUBES
+  //
 
   class Cube {
     id;
@@ -96,16 +125,13 @@
   }
 
   const cubesCount = 1500;
+  const intersectCubes = [];
   const cubesInstances = [];
   const zoneLength = 10;
   const zoneLimit = 0.3;
 
   for (let i = 0; i < cubesCount; i++) {
-    const cube = new Cube(
-      parameters.width,
-      parameters.height,
-      parameters.depth,
-    );
+    const cube = new Cube();
 
     cube.mesh.position.x = Math.random() * zoneLength - zoneLength / 2;
     cube.mesh.position.y = Math.random() * zoneLength - zoneLength / 2;
@@ -126,21 +152,25 @@
     }
 
     scene.add(cube.mesh);
-    intersectedCubes.push(cube.mesh);
+    intersectCubes.push(cube.mesh);
     cubesInstances.push(cube);
   }
 
+  //
   // RENDERER
+  //
 
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setAnimationLoop(animation);
 
+  const container = document.getElementById('container');
   container.appendChild(renderer.domElement);
   container.appendChild(VRButton.createButton(renderer));
 
-  // CONTROLLERS
+  //
+  // XR CONTROLLERS
+  //
 
   class XRControllers {
     scene;
@@ -154,8 +184,8 @@
 
       this.initRendererXRConfig();
       this.initControllers();
-      this.initControllersLines();
-      this.initControllersGrips();
+      this.initLines();
+      this.initGrips();
     }
 
     initRendererXRConfig () {
@@ -173,7 +203,7 @@
       console.log('controller2', this.controller2);
     }
 
-    initControllersLines () {
+    initLines () {
       const lineGeometry = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0, 0, 0),
         new THREE.Vector3(0, 0, -1),
@@ -187,30 +217,32 @@
       this.controller2.add(line.clone());
     }
 
-    initControllersGrips () {
+    initGrips () {
       const controllerModelFactory = new XRControllerModelFactory();
 
-      const controllerGrip1 = this.renderer.xr.getControllerGrip(0);
-      controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
-      this.scene.add(controllerGrip1);
+      const grip1 = this.renderer.xr.getControllerGrip(0);
+      grip1.add(controllerModelFactory.createControllerModel(grip1));
+      this.scene.add(grip1);
 
-      const controllerGrip2 = this.renderer.xr.getControllerGrip(1);
-      controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
-      this.scene.add(controllerGrip2);
+      const grip2 = this.renderer.xr.getControllerGrip(1);
+      grip2.add(controllerModelFactory.createControllerModel(grip2));
+      this.scene.add(grip2);
     }
   }
 
   const xrControllers = new XRControllers(scene, renderer);
 
-  // INTERSECTED OBJECTS MANAGER
+  //
+  // INTERSECTIONS MANAGER
+  //
 
-  class IntersectedObjectsManager {
-    lastIntersection = null;
+  class IntersectionsManager {
+    last = null;
 
-    update (objects, callback) {
-      if (objects.length > 0) {
-        const intersection = objects[0];
-        if (!this.lastIntersection || this.lastIntersection.object !== intersection.object) {
+    update (intersections, callback) {
+      if (intersections.length > 0) {
+        const intersection = intersections[0];
+        if (!this.last || this.last.object !== intersection.object) {
           this.change(intersection, callback);
         }
       }
@@ -220,20 +252,20 @@
     }
 
     change (intersection, callback) {
-      if (this.lastIntersection) {
-        this.onNotIntersected(this.lastIntersection, callback);
+      if (this.last) {
+        this.onNotIntersected(this.last, callback);
       }
 
-      this.lastIntersection = intersection;
-      this.onIntersected(this.lastIntersection, callback);
-      console.log('Last intersected object', this.lastIntersection.object, callback);
+      this.last = intersection;
+      this.onIntersected(this.last, callback);
+      console.log('Last intersected object', this.last.object, callback);
     }
 
     reset (callback) {
-      if (this.lastIntersection) {
-        this.onNotIntersected(this.lastIntersection, callback);
+      if (this.last) {
+        this.onNotIntersected(this.last, callback);
       }
-      this.lastIntersection = null;
+      this.last = null;
     }
 
     onIntersected (intersection, callback) {
@@ -249,78 +281,126 @@
     }
   }
 
-  // CONTROLLERS INTERSECTIONS
+  //
+  // XR CONTROLLERS INTERSECTIONS
+  //
 
   class XRControllersIntersections {
     controller1;
     controller2;
+    callback;
 
-    intersectedObjectsManager1 = new IntersectedObjectsManager();
-    intersectedObjectsManager2 = new IntersectedObjectsManager();
+    intersectionsManager1 = new IntersectionsManager();
+    intersectionsManager2 = new IntersectionsManager();
 
     raycaster = new THREE.Raycaster();
     tempMatrix = new THREE.Matrix4();
 
-    onSelectStartCallback = function () {};
-    onSelectEndCallback = function () {};
-
-    constructor (controller1, controller2) {
+    constructor (controller1, controller2, callback) {
       this.controller1 = controller1;
       this.controller2 = controller2;
+      this.callback = callback;
       this.connect();
     }
 
     connect () {
       this.controller1.addEventListener('selectstart', (event) => {
-        this.onSelectStartCallback(event);
+        this.onSelectStart(event);
       });
       this.controller1.addEventListener('selectend', (event) => {
-        this.onSelectEndCallback(event);
+        this.onSelectEnd(event);
       });
       this.controller2.addEventListener('selectstart', (event) => {
-        this.onSelectStartCallback(event);
+        this.onSelectStart(event);
       });
       this.controller2.addEventListener('selectend', (event) => {
-        this.onSelectEndCallback(event);
+        this.onSelectEnd(event);
       });
     }
 
-    onSelectStart (callback) {
-      this.onSelectStartCallback = callback;
+    onSelectStart (event) {
+      if (this.callback && typeof this.callback.onSelectStart === 'function') {
+        const controller = event.target;
+        const intersectionsManager = this.intersectionsManagerByController(controller);
+
+        if (!intersectionsManager) {
+          return;
+        }
+
+        const intersection = intersectionsManager.last;
+
+        if (!intersection) {
+          return;
+        }
+
+        this.callback.onSelectStart(controller, intersection.object, intersection);
+      }
     }
 
-    onSelectEnd (callback) {
-      this.onSelectEndCallback = callback;
+    onSelectEnd (event) {
+      if (this.callback && typeof this.callback.onSelectEnd === 'function') {
+        const controller = event.target;
+        const intersectionsManager = this.intersectionsManagerByController(controller);
+
+        if (!intersectionsManager) {
+          return;
+        }
+
+        const intersection = intersectionsManager.last;
+
+        if (!intersection) {
+          return;
+        }
+
+        this.callback.onSelectEnd(controller, intersection.object, intersection);
+      }
+    }
+
+    onIntersected (controller, object, intersection) {
+      if (this.callback && typeof this.callback.onIntersected === 'function') {
+        this.callback.onIntersected(controller, object, intersection);
+      }
+    }
+
+    onNotIntersected (controller, object, intersection) {
+      if (this.callback && typeof this.callback.onIntersected === 'function') {
+        this.callback.onNotIntersected(controller, object, intersection);
+      }
     }
 
     intersectedObjects (objects) {
-      this.intersectedObjectsByController(objects, this.controller1, this.intersectedObjectsManager1);
-      this.intersectedObjectsByController(objects, this.controller2, this.intersectedObjectsManager2);
+      this.intersectionsByController(objects, this.controller1, this.intersectionsManager1);
+      this.intersectionsByController(objects, this.controller2, this.intersectionsManager2);
     }
 
     // Internal
 
-    intersectedObjectsByController (objects, controller, intersectedObjectsManager) {
-      // Do not highlight when already selected
+    intersectionsManagerByController (controller) {
+      if (controller === this.controller1) {
+        return this.intersectionsManager1;
+      }
+      if (controller === this.controller2) {
+        return this.intersectionsManager2;
+      }
+    }
+
+    intersectionsByController (objects, controller, intersectionsManager) {
+      // Do not action when already selected
       if (controller.userData.selected !== undefined) {
         return;
       }
 
       const line = controller.getObjectByName('line');
-      const intersects = this.intersectObjectsByController(objects, controller);
+      const intersections = this.intersectObjectsByController(objects, controller);
 
-      intersectedObjectsManager.update(intersects, {
+      intersectionsManager.update(intersections, {
         onIntersected: (object, intersection) => {
           line.scale.z = intersection.distance;
-          object.material.opacity = 0.8;
-          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
-          cubeInstance.enableAnimation = false;
+          this.onIntersected(controller, object, intersection);
         },
-        onNotIntersected: (object) => {
+        onNotIntersected: (object, intersection) => {
           line.scale.z = 5;
-          object.material.opacity = 1;
-          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
-          cubeInstance.enableAnimation = true;
+          this.onNotIntersected(controller, object, intersection);
         },
       });
     }
@@ -337,42 +417,48 @@
   const xrControllerIntersections = new XRControllersIntersections(
     xrControllers.controller1,
     xrControllers.controller2,
+    {
+      onIntersected: (controller, object) => {
+        object.material.opacity = 0.8;
+        const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+        cubeInstance.enableAnimation = false;
+      },
+      onNotIntersected: (controller, object) => {
+        object.material.opacity = 1;
+        const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+        cubeInstance.enableAnimation = true;
+      },
+      onSelectStart: (controller, object) => {
+        controller.attach(object);
+        controller.userData.selected = object;
+      },
+      onSelectEnd: (controller) => {
+        const selected = controller.userData.selected;
+        if (selected !== undefined) {
+          scene.attach(selected);
+          controller.userData.selected = undefined;
+        }
+      },
+    },
   );
 
-  xrControllerIntersections.onSelectStart((event) => {
-    const controller = event.target;
-    const intersectedObjects = xrControllerIntersections.intersectObjectsByController(intersectedCubes, controller);
-
-    if (intersectedObjects.length > 0) {
-      const intersection = intersectedObjects[0];
-      const object = intersection.object;
-      controller.attach(object);
-      controller.userData.selected = object;
-    }
-  });
-
-  xrControllerIntersections.onSelectEnd((event) => {
-    const controller = event.target;
-    if (controller.userData.selected !== undefined) {
-      const object = controller.userData.selected;
-      scene.attach(object);
-      controller.userData.selected = undefined;
-    }
-  });
-
+  //
   // MOUSE INTERSECTIONS
+  //
 
   class MouseIntersections {
     camera;
     renderer;
-    intersectedObjectsManager = new IntersectedObjectsManager();
+    callback;
+    intersectionsManager = new IntersectionsManager();
 
     raycaster = new THREE.Raycaster();
     pointer = new THREE.Vector2();
 
-    constructor (camera, renderer) {
+    constructor (camera, renderer, callback) {
       this.camera = camera;
       this.renderer = renderer;
+      this.callback = callback;
       this.connect();
     }
 
@@ -382,6 +468,18 @@
       });
     }
 
+    onIntersected (object, intersection) {
+      if (this.callback && typeof this.callback.onIntersected === 'function') {
+        this.callback.onIntersected(object, intersection);
+      }
+    }
+
+    onNotIntersected (object, intersection) {
+      if (this.callback && typeof this.callback.onIntersected === 'function') {
+        this.callback.onNotIntersected(object, intersection);
+      }
+    }
+
     onPointerMove (event) {
       this.pointer.x = (event.clientX / this.renderer.domElement.clientWidth) * 2 - 1;
       this.pointer.y = -(event.clientY / this.renderer.domElement.clientHeight) * 2 + 1;
@@ -389,42 +487,41 @@
 
     intersectedObjects (objects) {
       this.raycaster.setFromCamera(this.pointer, this.camera);
-      const intersectedObjects = this.raycaster.intersectObjects(objects, false);
+      const intersections = this.raycaster.intersectObjects(objects, false);
 
-      this.intersectedObjectsManager.update(intersectedObjects, {
-        onIntersected: (object) => {
+      this.intersectionsManager.update(intersections, {
+        onIntersected: (object, intersection) => {
           document.body.style.cursor = 'pointer';
-          object.material.opacity = 0.8;
-          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
-          cubeInstance.enableAnimation = false;
+          this.onIntersected(this.pointer, object, intersection);
         },
-        onNotIntersected: (object) => {
+        onNotIntersected: (object, intersection) => {
           document.body.style.cursor = null;
-          object.material.opacity = 1;
-          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
-          cubeInstance.enableAnimation = true;
+          this.onNotIntersected(this.pointer, object, intersection);
         },
       });
     }
   }
 
-  const mouseIntersections = new MouseIntersections(camera, renderer);
+  const mouseIntersections = new MouseIntersections(
+    camera,
+    renderer,
+    {
+      onIntersected: (pointer, object) => {
+        object.material.opacity = 0.8;
+        const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+        cubeInstance.enableAnimation = false;
+      },
+      onNotIntersected: (pointer, object) => {
+        object.material.opacity = 1;
+        const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+        cubeInstance.enableAnimation = true;
+      },
+    },
+  );
 
-  // ORBIT CONTROLS
-
-  const orbitControls = new OrbitControls(camera, renderer.domElement);
-  orbitControls.target.set(0, 0, -1);
-  orbitControls.update();
-
-  // DRAG CONTROLS
-
-  const dragControls = new DragControls([...intersectedCubes], camera, renderer.domElement);
-  dragControls.addEventListener('drag', render);
-  // @see https://discourse.threejs.org/t/cant-i-use-dragcontrol-and-orbitcontrol-at-the-same-time/4265/3
-  dragControls.addEventListener('dragstart', function () { orbitControls.enabled = false; });
-  dragControls.addEventListener('dragend', function () { orbitControls.enabled = true; });
-
+  //
   // STATS & GUI GROUP
+  //
 
   const group = new InteractiveGroup(renderer, camera);
   scene.add(group);
@@ -442,7 +539,11 @@
   statsMesh.scale.setScalar(1);
   group.add(statsMesh);
 
-  // GUI (https://lil-gui.georgealways.com/)
+  // GUI (@see https://lil-gui.georgealways.com/)
+
+  const onBackgroundColorChange = () => {
+    scene.background = new THREE.Color(parameters.backgroundColor);
+  };
 
   const gui = new GUI({ width: 300 });
   const guiButtons = {
@@ -451,7 +552,7 @@
     },
   };
 
-  gui.add(parameters, 'animations').name('Animations');
+  gui.add(parameters, 'animation').name('Animation');
   gui.addColor(parameters, 'backgroundColor').name('Background color').onChange(onBackgroundColorChange);
   gui.add(guiButtons, 'reset').name('Reset');
 
@@ -463,37 +564,39 @@
   guiMesh.scale.setScalar(1);
   group.add(guiMesh);
 
-  function onBackgroundColorChange () {
-    scene.background = new THREE.Color(parameters.backgroundColor);
-  }
-
+  //
   // ON WINDOW RESIZE
+  //
 
-  window.addEventListener('resize', onWindowResize);
-
-  function onWindowResize () {
+  const onWindowResize = () => {
     const w = window.innerWidth;
     const h = window.innerHeight;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
-  }
+  };
 
+  window.addEventListener('resize', onWindowResize);
+
+  //
   // UTILS
+  //
 
-  function deltaRotationsPerMinute (delta, rotationsPerMinute) {
+  const deltaRotationsPerMinute = (delta, rotationsPerMinute) => {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;
-  }
+  };
 
+  //
   // ANIMATION
+  //
 
-  function animation () {
+  const animation = () => {
     const delta = clock.getDelta();
 
-    xrControllerIntersections.intersectedObjects(intersectedCubes);
-    mouseIntersections.intersectedObjects(intersectedCubes);
+    xrControllerIntersections.intersectedObjects(intersectCubes);
+    mouseIntersections.intersectedObjects(intersectCubes);
 
-    if (parameters.animations) {
+    if (parameters.animation) {
       cubesInstances.forEach(cube => {
         cube.animation(delta);
       });
@@ -507,11 +610,35 @@
 
     // Canvas elements doesn't trigger DOM updates, so we have to update the texture
     statsMesh.material.map.update();
-  }
+  };
 
-  function render () {
+  const render = () => {
     renderer.render(scene, camera);
-  }
+  };
+
+  //
+  // RENDERER BIS
+  //
+
+  renderer.setAnimationLoop(animation);
+
+  //
+  // ORBIT CONTROLS
+  //
+
+  const orbitControls = new OrbitControls(camera, renderer.domElement);
+  orbitControls.target.set(0, 0, -1);
+  orbitControls.update();
+
+  //
+  // DRAG CONTROLS
+  //
+
+  const dragControls = new DragControls([...intersectCubes], camera, renderer.domElement);
+  dragControls.addEventListener('drag', render);
+  // @see https://discourse.threejs.org/t/cant-i-use-dragcontrol-and-orbitcontrol-at-the-same-time/4265/3
+  dragControls.addEventListener('dragstart', () => orbitControls.enabled = false);
+  dragControls.addEventListener('dragend', () => orbitControls.enabled = true);
 </script>
 </body>
 </html>

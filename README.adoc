@@ -34,6 +34,8 @@ toc::[]
 Test area with https://threejs.org/[Three.js].
 See the result on https://www.jprivet.dev/three.js-sandbox/.
 
+image::img/readme-presentation.png[]
+
 {back_to_top}
 
 == Prerequisites
@@ -51,10 +53,24 @@ See the result on https://www.jprivet.dev/three.js-sandbox/.
 . `$ http-server . -p 8000`: run files from a local web server.
 . Open your browser on http://127.0.0.1:8000.
 
+{back_to_top}
+
+== Emulate XR devices in your browser
+
+* GitHub: https://github.com/MozillaReality/WebXR-emulator-extension[WebXR emulator extension] by https://github.com/MozillaReality[Mozilla Mixed Reality]
+* Firefox extension: https://addons.mozilla.org/en-US/firefox/addon/webxr-api-emulator/[WebXR API Emulator]
+* Chrome extension: https://chrome.google.com/webstore/detail/webxr-api-emulator/mjddjgeghkdijejnciaefnkjmkafnnje[WebXR API Emulator]
+
+image::img/readme-webxr.png[]
+
+{back_to_top}
+
 == Resources
 
 * https://threejs.org/
 * https://threejs.org/docs/#manual/en/introduction/How-to-run-things-locally
+
+{back_to_top}
 
 == Comments, suggestions?
 
