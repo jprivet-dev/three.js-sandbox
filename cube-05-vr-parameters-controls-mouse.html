@@ -286,7 +286,20 @@
 
     onSelectStart (event) {
       if (this.callback && typeof this.callback.onSelectStart === 'function') {
-        this.callback.onSelectStart(event);
+        const controller = event.target;
+        const intersectionsManager = this.intersectionsManagerByController(controller);
+
+        if (!intersectionsManager) {
+          return;
+        }
+
+        const intersection = intersectionsManager.lastIntersection;
+
+        if (!intersection) {
+          return;
+        }
+
+        this.callback.onSelectStart(controller, intersection.object, intersection);
       }
     }
 
@@ -302,6 +315,15 @@
     }
 
     // Internal
+
+    intersectionsManagerByController (controller) {
+      if (controller === this.controller1) {
+        return this.intersectionsManager1;
+      }
+      if (controller === this.controller2) {
+        return this.intersectionsManager2;
+      }
+    }
 
     intersectionsByController (objects, controller, intersectionsManager) {
       // Do not highlight when already selected
@@ -341,16 +363,9 @@
     xrControllers.controller1,
     xrControllers.controller2,
     {
-      onSelectStart: (event) => {
-        const controller = event.target;
-        const intersectedObjects = xrControllerIntersections.intersectObjectsByController(intersectCubes, controller);
-
-        if (intersectedObjects.length > 0) {
-          const intersection = intersectedObjects[0];
-          const object = intersection.object;
-          controller.attach(object);
-          controller.userData.selected = object;
-        }
+      onSelectStart: (controller, object) => {
+        controller.attach(object);
+        controller.userData.selected = object;
       },
       onSelectEnd: (event) => {
         const controller = event.target;
