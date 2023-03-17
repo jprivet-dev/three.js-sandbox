@@ -328,9 +328,9 @@
       }
     }
 
-    onNotIntersected (controller, object) {
+    onNotIntersected (controller, object, intersection) {
       if (this.callback && typeof this.callback.onIntersected === 'function') {
-        this.callback.onNotIntersected(controller, object);
+        this.callback.onNotIntersected(controller, object, intersection);
       }
     }
 
@@ -364,9 +364,9 @@
           line.scale.z = intersection.distance;
           this.onIntersected(controller, object, intersection);
         },
-        onNotIntersected: (object) => {
+        onNotIntersected: (object, intersection) => {
           line.scale.z = 5;
-          this.onNotIntersected(controller, object);
+          this.onNotIntersected(controller, object, intersection);
         },
       });
     }
@@ -413,14 +413,16 @@
   class MouseIntersections {
     camera;
     renderer;
+    callback;
     intersectionsManager = new IntersectionsManager();
 
     raycaster = new THREE.Raycaster();
     pointer = new THREE.Vector2();
 
-    constructor (camera, renderer) {
+    constructor (camera, renderer, callback) {
       this.camera = camera;
       this.renderer = renderer;
+      this.callback = callback;
       this.connect();
     }
 
@@ -428,6 +430,18 @@
       this.renderer.domElement.addEventListener('pointermove', (event) => {
         this.onPointerMove(event);
       });
+    }
+
+    onIntersected (object, intersection) {
+      if (this.callback && typeof this.callback.onIntersected === 'function') {
+        this.callback.onIntersected(object, intersection);
+      }
+    }
+
+    onNotIntersected (object, intersection) {
+      if (this.callback && typeof this.callback.onIntersected === 'function') {
+        this.callback.onNotIntersected(object, intersection);
+      }
     }
 
     onPointerMove (event) {
@@ -440,23 +454,34 @@
       const intersections = this.raycaster.intersectObjects(objects, false);
 
       this.intersectionsManager.update(intersections, {
-        onIntersected: (object) => {
+        onIntersected: (object, intersection) => {
           document.body.style.cursor = 'pointer';
-          object.material.opacity = 0.8;
-          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
-          cubeInstance.enableAnimation = false;
+          this.onIntersected(this.pointer, object, intersection);
         },
-        onNotIntersected: (object) => {
+        onNotIntersected: (object, intersection) => {
           document.body.style.cursor = null;
-          object.material.opacity = 1;
-          const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
-          cubeInstance.enableAnimation = true;
+          this.onNotIntersected(this.pointer, object, intersection);
         },
       });
     }
   }
 
-  const mouseIntersections = new MouseIntersections(camera, renderer);
+  const mouseIntersections = new MouseIntersections(
+    camera,
+    renderer,
+    {
+      onIntersected: (pointer, object) => {
+        object.material.opacity = 0.8;
+        const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+        cubeInstance.enableAnimation = false;
+      },
+      onNotIntersected: (pointer, object) => {
+        object.material.opacity = 1;
+        const cubeInstance = cubesInstances.find(cube => cube.id === object.id);
+        cubeInstance.enableAnimation = true;
+      },
+    },
+  );
 
   // ORBIT CONTROLS
 
