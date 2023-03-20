@@ -34,7 +34,7 @@ toc::[]
 Test area with https://threejs.org/[Three.js].
 See the result on https://www.jprivet.dev/three.js-sandbox/.
 
-image::img/readme-presentation.png[]
+image::img/readme-presentation.png[link="https://www.jprivet.dev/three.js-sandbox/"]
 
 == Codepen
 
@@ -48,7 +48,7 @@ image::img/01.png[link="https://codepen.io/jprivet_dev/pen/rNZJrex"]
 https://codepen.io/jprivet_dev/pen/rNZJrex[Three.js - Sandbox 01 - Cube - Simple example]
 a|
 image::img/05.png[link="https://codepen.io/jprivet_dev/pen/OJoEoPw"]
-https://codepen.io/jprivet_dev/pen/OJoEoPw[Three.js - Sandbox 05 - Cubes, Stats, GUI, Drag & Orbit Controls, Controllers, in Desktop & VR versions]
+https://codepen.io/jprivet_dev/pen/OJoEoPw[Three.js - Sandbox 05 - Cubes, Stats, GUI, Drag & Drop, Orbit Controls, Controllers, in Classic & VR versions]
 |===
 
 {back_to_top}
