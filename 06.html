@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>
+        Three.js - Sandbox 06 - Flying in the littlest Tokyo, VR version
+    </title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="container"></div>
+<div id="link">
+    <a href="./">Homepage</a>
+</div>
+<script type="importmap">
+{
+    "imports": {
+      "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+  // Sources:
+  // - https://threejs.org/examples/#webgl_animation_keyframes
+
+  import * as THREE from 'three';
+  import Stats from 'three/addons/libs/stats.module.js';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+  //
+  // CLOCK
+  //
+
+  const clock = new THREE.Clock();
+
+  //
+  // RENDERER
+  //
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  //
+  // CONTAINER
+  //
+
+  const container = document.getElementById('container');
+  container.appendChild(renderer.domElement);
+
+  //
+  // VR
+  //
+
+  container.appendChild(VRButton.createButton(renderer));
+
+  //
+  // SCENE
+  //
+
+  const pmremGenerator = new THREE.PMREMGenerator(renderer);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xbfe3dd);
+  scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  //
+  // CAMERA
+  //
+
+  const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 100);
+  camera.position.set(-1, 0, 8);
+
+  //
+  // LOADERS
+  //
+
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('libs/draco/gltf/');
+
+  let mixer;
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(dracoLoader);
+  loader.load('models/gltf/LittlestTokyo.glb', (gltf) => {
+    const model = gltf.scene;
+    model.position.set(0, 0, 0);
+    model.scale.set(0.01, 0.01, 0.01);
+    scene.add(model);
+
+    mixer = new THREE.AnimationMixer(model);
+    mixer.clipAction(gltf.animations[0]).play();
+
+    animation();
+  }, undefined, (e) => {
+    console.error(e);
+  });
+
+  //
+  // STATS
+  //
+
+  const stats = new Stats();
+  container.appendChild(stats.dom);
+
+  //
+  // ON WINDOW RESIZE
+  //
+
+  const onWindowResize = () => {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  };
+
+  window.addEventListener('resize', onWindowResize);
+
+  //
+  // ORBIT CONTROLS
+  //
+
+  const orbitControls = new OrbitControls(camera, renderer.domElement);
+  orbitControls.target.set(0, 0, 0);
+  orbitControls.update();
+  orbitControls.enablePan = false;
+  orbitControls.enableDamping = true;
+
+  //
+  // ANIMATION
+  //
+
+  const animation = () => {
+    requestAnimationFrame(animation);
+
+    const delta = clock.getDelta();
+
+    mixer.update(delta);
+    orbitControls.update();
+    stats.update();
+
+    renderer.render(scene, camera);
+  };
+</script>
+</body>
+</html>
