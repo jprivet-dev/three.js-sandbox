@@ -27,6 +27,7 @@
 
   import * as THREE from 'three';
   import Stats from 'three/addons/libs/stats.module.js';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
   import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -53,6 +54,12 @@
 
   const container = document.getElementById('container');
   container.appendChild(renderer.domElement);
+
+  //
+  // VR
+  //
+
+  container.appendChild(VRButton.createButton(renderer));
 
   //
   // SCENE
