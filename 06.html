@@ -30,7 +30,22 @@
   import { VRButton } from 'three/addons/webxr/VRButton.js';
   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  //
+  // PARAMETERS
+  //
+
+  let params = {
+    model: {
+      pos: {
+        x: 0,
+        y: 0,
+        z: -5,
+      },
+    },
+  };
 
   //
   // CAMERA
@@ -43,31 +58,7 @@
   //
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf7d9aa);
-
-  //
-  // LOADERS
-  //
-
-  const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('libs/draco/gltf/');
-
-  let mixer;
-  const loader = new GLTFLoader();
-  loader.setDRACOLoader(dracoLoader);
-  loader.load('models/gltf/LittlestTokyo.glb', (gltf) => {
-    const model = gltf.scene;
-    model.position.set(1, 0, -4);
-    model.scale.set(0.01, 0.01, 0.01);
-    scene.add(model);
-
-    mixer = new THREE.AnimationMixer(model);
-    mixer.clipAction(gltf.animations[0]).play();
-
-    renderer.setAnimationLoop(animation);
-  }, undefined, (e) => {
-    console.error(e);
-  });
+  scene.background = new THREE.Color(0xbfe3dd);
 
   //
   // CONTAINER
@@ -83,6 +74,41 @@
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
+
+  //
+  // LITTLEST TOKYO MODEL
+  //
+
+  // Texture
+
+  const pmremGenerator = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  // Loaders
+
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('libs/draco/gltf/');
+
+  let mixer;
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(dracoLoader);
+  loader.load('models/gltf/LittlestTokyo.glb', (gltf) => {
+    const model = gltf.scene;
+    model.position.set(
+      params.model.pos.x,
+      params.model.pos.y,
+      params.model.pos.z,
+    );
+    model.scale.set(0.01, 0.01, 0.01);
+    scene.add(model);
+
+    mixer = new THREE.AnimationMixer(model);
+    mixer.clipAction(gltf.animations[0]).play();
+
+    renderer.setAnimationLoop(animation);
+  }, undefined, (e) => {
+    console.error(e);
+  });
 
   //
   // VR
@@ -118,10 +144,16 @@
   //
 
   const orbitControls = new OrbitControls(camera, renderer.domElement);
-  orbitControls.target.set(0, 0, -4);
-  orbitControls.update();
+  orbitControls.target.set(
+    params.model.pos.x,
+    params.model.pos.y,
+    params.model.pos.z,
+  );
+  orbitControls.autoRotate = true;
+  orbitControls.autoRotateSpeed = -0.5;
   orbitControls.enablePan = false;
   orbitControls.enableDamping = true;
+  orbitControls.update();
 
   //
   // ANIMATION
@@ -132,9 +164,8 @@
   function animation () {
     const delta = clock.getDelta();
 
-    orbitControls.update();
     stats.update();
-
+    orbitControls.update();
     renderer.render(scene, camera);
   }
 </script>
