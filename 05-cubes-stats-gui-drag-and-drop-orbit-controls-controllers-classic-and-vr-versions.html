@@ -17,8 +17,10 @@
        target="_blank">GitHub</a>
 </div>
 <div class="bottom-right">
+    <a id="button-switch-performance"></a>
     <a href="https://threejs.org/examples/" title="Code based on Three.js examples" target="_blank">Three.js</a>
 </div>
+<script src="./script.js"></script>
 <script type="importmap">
 {
     "imports": {
@@ -47,6 +49,12 @@
   import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
   import { DragControls } from 'three/addons/controls/DragControls.js';
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  //
+  // BUTTON SWITCH PERFORMANCE
+  //
+
+  const buttonSwitchPerformance = new ButtonSwitchPerformance('button-switch-performance');
 
   //
   // PARAMETERS
@@ -134,7 +142,7 @@
   // RENDERER
   //
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: buttonSwitchPerformance.highPerformance() });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
 

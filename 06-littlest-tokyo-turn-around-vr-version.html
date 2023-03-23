@@ -20,8 +20,9 @@
        target="_blank">GitHub</a>
 </div>
 <div class="bottom-right">
-    <a href="./06-littlest-tokyo-turn-around-vr-version-low-perf.html">Low performance</a>
+    <a id="button-switch-performance"></a>
 </div>
+<script src="./script.js"></script>
 <script type="importmap">
 {
     "imports": {
@@ -42,6 +43,12 @@
   import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
   import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  //
+  // BUTTON SWITCH PERFORMANCE
+  //
+
+  const buttonSwitchPerformance = new ButtonSwitchPerformance('button-switch-performance');
 
   //
   // PARAMETERS
@@ -88,7 +95,7 @@
   // RENDERER
   //
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: buttonSwitchPerformance.highPerformance() });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
