@@ -55,7 +55,7 @@
     model: {
       pos: {
         x: 0.9,
-        y: 1,
+        y: 1.5,
         z: 0.4,
       },
       scale: 0.01,
@@ -85,7 +85,7 @@
   // RENDERER
   //
 
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
@@ -199,20 +199,35 @@
   //
 
   const clock = new THREE.Clock();
+  const height = 2.1;
+  let count, round;
 
-  function animation () {
+  const animation = () => {
     const delta = clock.getDelta();
 
     // No use of option orbitControls.autoRotateSpeed
     // to force the rotation also in the VR version.
-    group.rotation.y += deltaRotationsPerMinute(delta, -0.4);
+    group.rotation.y += deltaRotationsPerMinute(delta, -0.5);
+
+    // - Round 0: we turn around the model at ground level
+    // - Round 1: we climb to the roofs
+    // - Round 2: we turn at the roofs
+    // - Round 3: we go down to ground level
+    count = Math.ceil(group.rotation.y / (2 * Math.PI)); // count rounds
+    round = -Math.ceil(count % 4); // 0, 1, 2 and 3
+    if (round === 1) {
+      group.position.y = height * Math.cos((group.rotation.y / 2) % Math.PI) - height; // Go up
+    }
+    else if (round === 3) {
+      group.position.y = -(height * Math.cos((group.rotation.y / 2) % Math.PI) + height); // Go down
+    }
 
     mixer.update(delta);
     orbitControls.update();
     stats.update();
 
     renderer.render(scene, camera);
-  }
+  };
 </script>
 </body>
 </html>
