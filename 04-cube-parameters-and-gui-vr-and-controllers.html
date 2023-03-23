@@ -8,8 +8,14 @@
 </head>
 <body>
 <div id="container"></div>
-<div id="link">
-    <a href="./">Homepage</a>
+<div class="bottom-left">
+    <a href="./" title="Back to the list of my tests">Homepage</a>
+    <a href="https://github.com/jprivet-dev/three.js-sandbox"
+       title="Find all my codes on GitHub"
+       target="_blank">GitHub</a>
+</div>
+<div class="bottom-right">
+    <a href="https://threejs.org/examples/" title="Code based on Three.js examples" target="_blank">Three.js</a>
 </div>
 <script type="importmap">{
     "imports": {
@@ -25,6 +31,14 @@
   // - https://threejs.org/examples/#webgl_animation_skinning_blending
   // - https://threejs.org/examples/#webxr_vr_sandbox
   // - https://threejs.org/examples/#webxr_vr_dragging
+
+  import * as THREE from 'three';
+  import Stats from 'three/addons/libs/stats.module.js';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
+  import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+  import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
+  import { InteractiveGroup } from 'three/addons/interactive/InteractiveGroup.js';
+  import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
 
   //
   // INIT

@@ -4,16 +4,23 @@ body {
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.5;
-    color: #212529;
+    color: white;
 }
 
 a {
-    color: #0d6efd;
-    text-decoration: underline;
+    color: white;
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    padding: 5px 8px;
+    outline: none;
+    border-radius: 4px;
+    border: 1px solid white;
+    opacity: 0.5;
 }
 
 a:focus, a:hover {
-    color: #0a58ca;
+    opacity: 1;
 }
 
 #container {
@@ -21,6 +28,24 @@ a:focus, a:hover {
     width: 100%;
     height: 100%;
     overflow: hidden;
+}
+
+.bottom-left {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+}
+
+.top-right {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.bottom-right {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
 }
 
 #link {
