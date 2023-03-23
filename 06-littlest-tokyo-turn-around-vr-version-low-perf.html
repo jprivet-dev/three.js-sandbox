@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <title>
-        Three.js - Sandbox 06 - Littlest Tokyo - Turn around, VR version
+        Three.js - Sandbox 06 - Littlest Tokyo - Turn around, VR version (LOW PERFORMANCE)
     </title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
@@ -20,7 +20,7 @@
        target="_blank">GitHub</a>
 </div>
 <div class="bottom-right">
-    <a href="./06-littlest-tokyo-turn-around-vr-version-low-perf.html">Low performance</a>
+    <a href="./06-littlest-tokyo-turn-around-vr-version.html">High performance</a>
 </div>
 <script type="importmap">
 {
@@ -88,7 +88,7 @@
   // RENDERER
   //
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
