@@ -20,7 +20,6 @@
       "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
     }
 }
-
 </script>
 <script type="module">
   // Sources:
@@ -29,23 +28,15 @@
   import * as THREE from 'three';
   import Stats from 'three/addons/libs/stats.module.js';
   import { VRButton } from 'three/addons/webxr/VRButton.js';
-  import { InteractiveGroup } from 'three/addons/interactive/InteractiveGroup.js';
-
-  //
-  // INIT
-  //
-
-  let parameters = {
-    width: 0.2,
-    height: 0.2,
-    depth: 0.2,
-  };
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
   //
   // CAMERA
   //
 
-  const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
+  const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 10);
 
   //
   // SCENE
@@ -55,36 +46,28 @@
   scene.background = new THREE.Color(0xf7d9aa);
 
   //
-  // CUBE
+  // LOADERS
   //
 
-  class Cube {
-    geometry;
-    material;
-    mesh;
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('libs/draco/gltf/');
 
-    constructor (width, height, depth) {
-      this.geometry = new THREE.BoxGeometry(width, height, depth);
-      this.material = new THREE.MeshNormalMaterial();
-      this.material.transparent = true;
-      this.mesh = new THREE.Mesh(this.geometry, this.material);
-    }
+  let mixer;
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(dracoLoader);
+  loader.load('models/gltf/LittlestTokyo.glb', (gltf) => {
+    const model = gltf.scene;
+    model.position.set(1, 0, -4);
+    model.scale.set(0.01, 0.01, 0.01);
+    scene.add(model);
 
-    animation (delta) {
-      this.mesh.rotation.x += deltaRotationsPerMinute(delta, 4);
-      this.mesh.rotation.y += deltaRotationsPerMinute(delta, 8);
-    }
-  }
+    mixer = new THREE.AnimationMixer(model);
+    mixer.clipAction(gltf.animations[0]).play();
 
-  const cube = new Cube(
-    parameters.width,
-    parameters.height,
-    parameters.depth,
-  );
-
-  cube.mesh.position.z = -1;
-  cube.mesh.position.y = 0.2; // TODO: to remove
-  scene.add(cube.mesh);
+    renderer.setAnimationLoop(animation);
+  }, undefined, (e) => {
+    console.error(e);
+  });
 
   //
   // CONTAINER
@@ -99,7 +82,6 @@
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setAnimationLoop(animation);
   container.appendChild(renderer.domElement);
 
   //
@@ -109,13 +91,6 @@
   renderer.xr.enabled = true;
   renderer.xr.setReferenceSpaceType('local');
   container.appendChild(VRButton.createButton(renderer));
-
-  //
-  // INTERACTIVE GROUP
-  //
-
-  const group = new InteractiveGroup(renderer, camera);
-  scene.add(group);
 
   //
   // STATS
@@ -139,12 +114,14 @@
   }
 
   //
-  // UTILS
+  // ORBIT CONTROLS
   //
 
-  function deltaRotationsPerMinute (delta, rotationsPerMinute) {
-    return 2 * Math.PI / 60 * delta * rotationsPerMinute;
-  }
+  const orbitControls = new OrbitControls(camera, renderer.domElement);
+  orbitControls.target.set(0, 0, -4);
+  orbitControls.update();
+  orbitControls.enablePan = false;
+  orbitControls.enableDamping = true;
 
   //
   // ANIMATION
@@ -154,9 +131,11 @@
 
   function animation () {
     const delta = clock.getDelta();
-    cube.animation(delta);
-    renderer.render(scene, camera);
+
+    orbitControls.update();
     stats.update();
+
+    renderer.render(scene, camera);
   }
 </script>
 </body>
