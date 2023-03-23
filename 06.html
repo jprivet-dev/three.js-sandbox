@@ -20,6 +20,7 @@
       "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
     }
 }
+
 </script>
 <script type="module">
   // Sources:
@@ -166,6 +167,8 @@
 
     stats.update();
     orbitControls.update();
+    mixer.update(delta);
+
     renderer.render(scene, camera);
   }
 </script>
