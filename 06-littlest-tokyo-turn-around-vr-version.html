@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <title>
-        Three.js - Sandbox 06 - Flying in the littlest Tokyo, VR version
+        Three.js - Sandbox 06 - Littlest Tokyo - Turn around, VR version
     </title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
@@ -10,8 +10,14 @@
 </head>
 <body>
 <div id="container"></div>
-<div id="link">
-    <a href="./">Homepage</a>
+<div class="top-right">
+    <a href="https://threejs.org/examples/" title="Code based on Three.js examples" target="_blank">Three.js</a>
+</div>
+<div class="bottom-left">
+    <a href="./" title="Back to the list of my tests">Homepage</a>
+    <a href="https://github.com/jprivet-dev/three.js-sandbox"
+       title="Find all my codes on GitHub"
+       target="_blank">GitHub</a>
 </div>
 <script type="importmap">
 {
@@ -20,11 +26,11 @@
       "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
     }
 }
-
 </script>
 <script type="module">
   // Sources:
   // - https://threejs.org/examples/#webgl_animation_keyframes
+  // - https://www.artstation.com/artwork/1AGwX
 
   import * as THREE from 'three';
   import Stats from 'three/addons/libs/stats.module.js';
@@ -39,12 +45,20 @@
   //
 
   let params = {
-    model: {
+    group: {
       pos: {
         x: 0,
         y: 0,
-        z: -5,
+        z: -3.8,
       },
+    },
+    model: {
+      pos: {
+        x: 0.9,
+        y: 1,
+        z: 0.4,
+      },
+      scale: 0.01,
     },
   };
 
@@ -80,10 +94,23 @@
   // LITTLEST TOKYO MODEL
   //
 
+  // Group
+
+  const group = new THREE.Group();
+  group.position.set(
+    params.group.pos.x,
+    params.group.pos.y,
+    params.group.pos.z,
+  );
+
   // Texture
 
   const pmremGenerator = new THREE.PMREMGenerator(renderer);
   scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+  // Color textures: PNG or JPEG Textures containing color information (like .map or .emissiveMap)
+  // use the closed domain sRGB color space, and must be annotated with texture.encoding = sRGBEncoding.
+  // @see https://threejs.org/docs/#manual/en/introduction/Color-management
+  renderer.outputEncoding = THREE.sRGBEncoding;
 
   // Loaders
 
@@ -100,8 +127,14 @@
       params.model.pos.y,
       params.model.pos.z,
     );
-    model.scale.set(0.01, 0.01, 0.01);
-    scene.add(model);
+    model.scale.set(
+      params.model.scale,
+      params.model.scale,
+      params.model.scale,
+    );
+
+    group.add(model);
+    scene.add(group);
 
     mixer = new THREE.AnimationMixer(model);
     mixer.clipAction(gltf.animations[0]).play();
@@ -146,15 +179,20 @@
 
   const orbitControls = new OrbitControls(camera, renderer.domElement);
   orbitControls.target.set(
-    params.model.pos.x,
-    params.model.pos.y,
-    params.model.pos.z,
+    params.group.pos.x,
+    params.group.pos.y,
+    params.group.pos.z,
   );
-  orbitControls.autoRotate = true;
-  orbitControls.autoRotateSpeed = -0.5;
+  //orbitControls.autoRotateSpeed = -0.4;
   orbitControls.enablePan = false;
   orbitControls.enableDamping = true;
   orbitControls.update();
+
+  // UTILS
+
+  function deltaRotationsPerMinute (delta, rotationsPerMinute) {
+    return 2 * Math.PI / 60 * delta * rotationsPerMinute;
+  }
 
   //
   // ANIMATION
@@ -165,9 +203,13 @@
   function animation () {
     const delta = clock.getDelta();
 
-    stats.update();
-    orbitControls.update();
+    // No use of option orbitControls.autoRotateSpeed
+    // to force the rotation also in the VR version.
+    group.rotation.y += deltaRotationsPerMinute(delta, -0.4);
+
     mixer.update(delta);
+    orbitControls.update();
+    stats.update();
 
     renderer.render(scene, camera);
   }
