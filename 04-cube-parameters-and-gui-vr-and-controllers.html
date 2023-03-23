@@ -26,13 +26,9 @@
   // - https://threejs.org/examples/#webxr_vr_sandbox
   // - https://threejs.org/examples/#webxr_vr_dragging
 
-  import * as THREE from 'three';
-  import Stats from 'three/addons/libs/stats.module.js';
-  import { VRButton } from 'three/addons/webxr/VRButton.js';
-  import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-  import { HTMLMesh } from 'three/addons/interactive/HTMLMesh.js';
-  import { InteractiveGroup } from 'three/addons/interactive/InteractiveGroup.js';
-  import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
+  //
+  // INIT
+  //
 
   let parameters = {
     width: 0.2,
@@ -40,17 +36,24 @@
     depth: 0.2,
   };
 
-  // INIT
-
-  const container = document.getElementById('container');
   const raytracerObjects = [];
-  const clock = new THREE.Clock();
+
+  //
+  // CAMERA
+  //
 
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
+
+  //
+  // SCENE
+  //
+
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf7d9aa);
 
+  //
   // CUBE
+  //
 
   class Cube {
     geometry;
@@ -81,24 +84,40 @@
   scene.add(cube.mesh);
   raytracerObjects.push(cube.mesh);
 
+  //
+  // CONTAINER
+  //
+
+  const container = document.getElementById('container');
+
+  //
   // RENDERER
+  //
 
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setAnimationLoop(animation);
+  container.appendChild(renderer.domElement);
+
+  //
+  // VR
+  //
+
   renderer.xr.enabled = true;
   renderer.xr.setReferenceSpaceType('local');
-  renderer.setAnimationLoop(animation);
-
-  container.appendChild(renderer.domElement);
   container.appendChild(VRButton.createButton(renderer));
 
-  // STATS & GUI GROUP
+  //
+  // INTERACTIVE GROUP
+  //
 
   const group = new InteractiveGroup(renderer, camera);
   scene.add(group);
 
+  //
   // STATS
+  //
 
   const stats = new Stats();
   container.appendChild(stats.dom);
@@ -112,7 +131,9 @@
   group.add(statsMesh);
   raytracerObjects.push(statsMesh);
 
+  //
   // GUI (https://lil-gui.georgealways.com/)
+  //
 
   let guiPreset;
   const gui = new GUI({ width: 300 });
@@ -142,7 +163,9 @@
     cube.mesh.geometry = new THREE.BoxGeometry(...Object.values(parameters));
   }
 
+  //
   // CONTROLLERS
+  //
 
   const controller1 = renderer.xr.getController(0);
   scene.add(controller1);
@@ -152,7 +175,7 @@
   scene.add(controller2);
   console.log('controller2', controller2);
 
-  //
+  // Grips
 
   const controllerModelFactory = new XRControllerModelFactory();
 
@@ -164,7 +187,7 @@
   controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
   scene.add(controllerGrip2);
 
-  //
+  // Lines
 
   const lineGeometry = new THREE.BufferGeometry().setFromPoints([
     new THREE.Vector3(0, 0, 0),
@@ -178,7 +201,9 @@
   controller1.add(line.clone());
   controller2.add(line.clone());
 
+  //
   // CONTROLLERS INTERSECTIONS
+  //
 
   const raycaster = new THREE.Raycaster();
   const intersected = [];
@@ -226,7 +251,9 @@
     }
   }
 
+  //
   // ON WINDOW RESIZE
+  //
 
   window.addEventListener('resize', onWindowResize);
 
@@ -238,13 +265,19 @@
     renderer.setSize(w, h);
   }
 
+  //
   // UTILS
+  //
 
   function deltaRotationsPerMinute (delta, rotationsPerMinute) {
     return 2 * Math.PI / 60 * delta * rotationsPerMinute;
   }
 
+  //
   // ANIMATION
+  //
+
+  const clock = new THREE.Clock();
 
   function animation () {
     const delta = clock.getDelta();

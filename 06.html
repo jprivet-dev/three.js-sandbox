@@ -20,6 +20,7 @@
       "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
     }
 }
+
 </script>
 <script type="module">
   // Sources:
@@ -28,59 +29,63 @@
   import * as THREE from 'three';
   import Stats from 'three/addons/libs/stats.module.js';
   import { VRButton } from 'three/addons/webxr/VRButton.js';
-  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
   //
-  // CLOCK
+  // PARAMETERS
   //
 
-  const clock = new THREE.Clock();
+  let params = {
+    model: {
+      pos: {
+        x: 0,
+        y: 0,
+        z: -5,
+      },
+    },
+  };
 
   //
-  // RENDERER
+  // CAMERA
   //
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.outputEncoding = THREE.sRGBEncoding;
+  const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 10);
+
+  //
+  // SCENE
+  //
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xbfe3dd);
 
   //
   // CONTAINER
   //
 
   const container = document.getElementById('container');
+
+  //
+  // RENDERER
+  //
+
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
 
   //
-  // VR
+  // LITTLEST TOKYO MODEL
   //
 
-  container.appendChild(VRButton.createButton(renderer));
-
-  //
-  // SCENE
-  //
+  // Texture
 
   const pmremGenerator = new THREE.PMREMGenerator(renderer);
-
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xbfe3dd);
   scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
-  //
-  // CAMERA
-  //
-
-  const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 100);
-  camera.position.set(-1, 0, 8);
-
-  //
-  // LOADERS
-  //
+  // Loaders
 
   const dracoLoader = new DRACOLoader();
   dracoLoader.setDecoderPath('libs/draco/gltf/');
@@ -90,17 +95,29 @@
   loader.setDRACOLoader(dracoLoader);
   loader.load('models/gltf/LittlestTokyo.glb', (gltf) => {
     const model = gltf.scene;
-    model.position.set(0, 0, 0);
+    model.position.set(
+      params.model.pos.x,
+      params.model.pos.y,
+      params.model.pos.z,
+    );
     model.scale.set(0.01, 0.01, 0.01);
     scene.add(model);
 
     mixer = new THREE.AnimationMixer(model);
     mixer.clipAction(gltf.animations[0]).play();
 
-    animation();
+    renderer.setAnimationLoop(animation);
   }, undefined, (e) => {
     console.error(e);
   });
+
+  //
+  // VR
+  //
+
+  renderer.xr.enabled = true;
+  renderer.xr.setReferenceSpaceType('local');
+  container.appendChild(VRButton.createButton(renderer));
 
   //
   // STATS
@@ -113,41 +130,47 @@
   // ON WINDOW RESIZE
   //
 
-  const onWindowResize = () => {
+  window.addEventListener('resize', onWindowResize);
+
+  function onWindowResize () {
     const w = window.innerWidth;
     const h = window.innerHeight;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
-  };
-
-  window.addEventListener('resize', onWindowResize);
+  }
 
   //
   // ORBIT CONTROLS
   //
 
   const orbitControls = new OrbitControls(camera, renderer.domElement);
-  orbitControls.target.set(0, 0, 0);
-  orbitControls.update();
+  orbitControls.target.set(
+    params.model.pos.x,
+    params.model.pos.y,
+    params.model.pos.z,
+  );
+  orbitControls.autoRotate = true;
+  orbitControls.autoRotateSpeed = -0.5;
   orbitControls.enablePan = false;
   orbitControls.enableDamping = true;
+  orbitControls.update();
 
   //
   // ANIMATION
   //
 
-  const animation = () => {
-    requestAnimationFrame(animation);
+  const clock = new THREE.Clock();
 
+  function animation () {
     const delta = clock.getDelta();
 
-    mixer.update(delta);
-    orbitControls.update();
     stats.update();
+    orbitControls.update();
+    mixer.update(delta);
 
     renderer.render(scene, camera);
-  };
+  }
 </script>
 </body>
 </html>
