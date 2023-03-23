@@ -51,6 +51,9 @@ image::img/05.png[link="https://codepen.io/jprivet_dev/pen/OJoEoPw"]
 https://codepen.io/jprivet_dev/pen/OJoEoPw[Three.js - Sandbox 05 - Cubes, Stats, GUI, Drag & Drop, Orbit Controls, Controllers, in Classic & VR versions]
 |===
 
+IMPORTANT: Unfortunately the VR button does not activate in Codepen.
+No solution for the moment.
+
 {back_to_top}
 
 == Prerequisites
